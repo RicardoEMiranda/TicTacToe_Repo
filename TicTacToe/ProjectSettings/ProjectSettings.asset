@@ -702,10 +702,10 @@ PlayerSettings:
     m_VersionCode: 1
     m_VersionName: 
   apiCompatibilityLevel: 6
-  cloudProjectId: 
+  cloudProjectId: ff29cb78-15f4-4034-a750-f7515171676f
   framebufferDepthMemorylessMode: 0
-  projectName: 
-  organizationId: 
+  projectName: TicTacToe
+  organizationId: rick-miranda
   cloudEnabled: 0
   enableNativePlatformBackendsForNewInputSystem: 0
   disableOldInputManagerSupport: 0
