@@ -52,6 +52,7 @@ public class TicTacToeAI : MonoBehaviour {
 	private int row, col;
 	private int turn = 0;
 	private bool isWinningMove;
+	private bool aiDelayFinished;
 
 	[SerializeField] private int turn2x, turn2y, turn4x, turn4y, turn6x, turn6y;
 	
@@ -69,11 +70,90 @@ public class TicTacToeAI : MonoBehaviour {
     private void Update() {
         if(!_isPlayerTurn) {
 			if(turn == 2) {
-				AiSelects(turn2x, turn2y);
+
+				//This assumes AI will always go second
+				//if a corner has been taken (0,0)(0,2)(2,0) or (2,2), take the center grid
+				if(gridValues[0,0] == -1 || gridValues[0,2] == -1 || gridValues[2,0] == -1 || gridValues[2,2] == -1) {
+					//Debug.Log("Corner grid has been taken on first move. AI Takes center grid");
+					StartCoroutine(AIDelay());
+					if(aiDelayFinished) {
+						AiSelects(1, 1);
+						aiDelayFinished = false;
+					}
+					
+                } else if (gridValues[1,1] == -1) {
+					//Debug.Log("Player took center position on first move. Take a random corner grid.");
+
+					//possible corner grids are at (0,0), (0,2), (2,0) or (2,2)
+					//row value is either 0 or 2, col value is either 0 or 2
+					int[] cornerGrids = new int[2] { 0, 2 };
+
+					//sets cornerGrids[0]=0 or cornerGrids[1]=2 for the corner row
+					int randomCornerRow = cornerGrids[UnityEngine.Random.Range(0, 2)]; 
+					int randomCornerCol = cornerGrids[UnityEngine.Random.Range(0, 2)];
+
+					StartCoroutine(AIDelay());
+					if (aiDelayFinished) {
+						AiSelects(randomCornerRow, randomCornerCol);
+						aiDelayFinished = false;
+					}
+                } else {
+					//Debug.Log("Player selected other than center or corner grid on opening move");
+					//Player has positioned his cirlce in one of the outside center grids (1,3, 5 or 7)
+					//AI picks a random corner grid for best outcome
+					//possible corner grids are at (0,0), (0,2), (2,0) or (2,2)
+					//row value is either 0 or 2, col value is either 0 or 2
+					int[] cornerGrids = new int[2] { 0, 2 };
+
+					//sets cornerGrids[0]=0 or cornerGrids[1]=2 for the corner row
+					int randomCornerRow = cornerGrids[UnityEngine.Random.Range(0, 2)];
+					int randomCornerCol = cornerGrids[UnityEngine.Random.Range(0, 2)];
+
+					StartCoroutine(AIDelay());
+					if (aiDelayFinished) {
+						AiSelects(randomCornerRow, randomCornerCol);
+						aiDelayFinished = false;
+					}
+				}
             }
 
-			if(turn >= 4) {
+			if(turn == 4) {
 				//AiSelects(turn4x,turn4y);
+				isWinningMove = CheckIfWinningMove();
+				Debug.Log("Is Winning Move? " + isWinningMove);
+				if (isWinningMove) {
+					int[] emptyGridCoordinates = MakeWinningMove(-20);
+					AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
+				}
+
+				if (!isWinningMove) {
+					Debug.Log("Not a winning move, AI should Block or exploit");
+					int[] emptyGridCoordinates = MakeWinningMove(-2);
+					AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
+				}
+			}
+
+			if(turn == 6) {
+
+				//First priority is to make a winning move if can win on the next move
+				isWinningMove = CheckIfWinningMove();
+				Debug.Log("Is Winning Move? " + isWinningMove);
+				if(isWinningMove) {
+					int[] emptyGridCoordinates = MakeWinningMove(-20);
+					AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
+                }
+
+				if(!isWinningMove) {
+					int[] emptyGridCoordinates = MakeWinningMove(-2);
+					AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
+				}
+				
+			
+            }
+
+			if (turn == 8) {
+
+				//First priority is to make a winning move if can win on the next move
 				isWinningMove = CheckIfWinningMove();
 				Debug.Log("Is Winning Move? " + isWinningMove);
 				if (isWinningMove) {
@@ -85,107 +165,10 @@ public class TicTacToeAI : MonoBehaviour {
 					int[] emptyGridCoordinates = MakeWinningMove(-2);
 					AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
 				}
+
+
 			}
-
-			if(turn == 6) {
-
-				/*//First priority is to make a winning move if can win on the next move
-				isWinningMove = CheckIfWinningMove();
-				Debug.Log("Is Winning Move? " + isWinningMove);
-				if(isWinningMove) {
-					int[] emptyGridCoordinates = MakeWinningMove(-20);
-					AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
-                }
-
-				if(!isWinningMove) {
-					int[] emptyGridCoordinates = MakeWinningMove(-2);
-					AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
-				}/*
-				//If there are no winning moves, check if need to block the player from winning
-				//this happens when the values on any given row, column or diagonal is -2
-
-
-				//check sum of each row. If -20, find row and column with the empty grid
-				//and send coordinates to AI for blocking
-				/*if(rowSums[0] == -20) {
-					row = 0;
-					int[] array = ReturnRowArrayValues(gridValues, 0);
-					col = FindGridForWin(array);
-                } 
-
-				if(rowSums[1] == -20) {
-					row = 1;
-					int[] array = ReturnRowArrayValues(gridValues, 1);
-					col = FindGridForWin(array);
-				}
-
-				if(rowSums[2] == -20) {
-					row = 2;
-					int[] array = ReturnRowArrayValues(gridValues, 2);
-					col = FindGridForWin(array);
-				}
-
-				//check sum of each column. If -20, find row and column with the empty grid
-				//and send coordinates to AI for blocking
-				if (colSums[0] == -20) {
-					col = 0;
-					int[] array = ReturnColArrayValues(gridValues, 0);
-					row = FindGridForWin(array);
-				}
-
-				if (colSums[1] == -20) {
-					col = 1;
-					int[] array = ReturnColArrayValues(gridValues, 1);
-					row = FindGridForWin(array);
-				}
-
-				if (colSums[2] == -20) {
-					col = 2;
-					int[] array = ReturnColArrayValues(gridValues, 2);
-					row = FindGridForWin(array);
-				}
-
-				//check sum of diagonal going from bottom to top, if -20 
-				//find row and column with the empty grid and send coordinates to AI for blocking
-				if (diagSums[0] == -20) {
-					int[] array = ReturnBTDiagonalArrayValues(gridValues);
-					if(array[0] == 0) {
-						row = 2;
-						col = 0;
-                    } else if(array[1] == 0) {
-						row = 1;
-						col = 1;
-                    } else if(array[2] == 0) {
-						row = 0;
-						col = 2;
-                    } else {
-						Debug.Log("Diagonal Array exception");
-                    }
-                }
-
-				//check sum of diagonal going from top to bottom , if -20 
-				//find row and column with the empty grid and send coordinates to AI for blocking
-				if (diagSums[1] == -20) {
-					int[] array = ReturnTBDiagonalArrayValues(gridValues);
-					if (array[0] == 0) {
-						row = 0;
-						col = 0;
-					} else if (array[1] == 0) {
-						row = 1;
-						col = 1;
-					} else if (array[2] == 0) {
-						row = 2;
-						col = 2;
-					} else {
-						Debug.Log("Diagonal Array exception");
-					}
-				}
-
-				int[] emptyGrid = new int[2] { row, col };
-				AiSelects(row, col);*/
-			
-            }
-        }
+		}
     }
 
     public void StartAI(int AILevel){
@@ -205,45 +188,59 @@ public class TicTacToeAI : MonoBehaviour {
 	}
 
 	public void PlayerSelects(int coordX, int coordY){
-		
-		turn += 1;
-		Debug.Log("Turn: " + turn);
-		SetVisual(coordX, coordY, playerState);
-		UpdateGridValues(coordX, coordY, playerState);
-		rowSums = CheckRowSum(gridValues);
-		colSums = CheckColSum(gridValues);
-		diagSums = CheckDiagSum(gridValues);
-		_isPlayerTurn = false;
 
-		Debug.Log("Row1 Sum: " + rowSums[0] + "  Row2 Sums: " + rowSums[1] + " Row3 Sums: " + rowSums[2]);
-		Debug.Log("Col1 Sum: " + colSums[0] + "  Col2 Sums: " + colSums[1] + " Col3 Sums: " + colSums[2]);
-		Debug.Log("Diag1 Sum: " + diagSums[0] + "  Diag2 Sum: " + diagSums[1]);
+		//checks that grid value is 0, therefore no cross or cirlce prefab instantiated
+		//already in this grid before carrying out SetVisual method
+		if (gridValues[coordX, coordY] == 0) {
+			turn += 1;
+			Debug.Log("Turn: " + turn);
+			SetVisual(coordX, coordY, playerState);
+			UpdateGridValues(coordX, coordY, playerState);
+			rowSums = CheckRowSum(gridValues);
+			colSums = CheckColSum(gridValues);
+			diagSums = CheckDiagSum(gridValues);
+			_isPlayerTurn = false;
+
+			Debug.Log("Row1 Sum: " + rowSums[0] + "  Row2 Sums: " + rowSums[1] + " Row3 Sums: " + rowSums[2]);
+			Debug.Log("Col1 Sum: " + colSums[0] + "  Col2 Sums: " + colSums[1] + " Col3 Sums: " + colSums[2]);
+			Debug.Log("Diag1 Sum: " + diagSums[0] + "  Diag2 Sum: " + diagSums[1]);
+		}
+		
 	}
 
 	public void AiSelects(int coordX, int coordY){
+		
+		//checks that grid value is 0, therefore no cross or cirlce prefab instantiated
+		//already in this grid before carrying out SetVisual method
+		if(gridValues[coordX, coordY] == 0) {
+			turn += 1;
+			Debug.Log("Turn: " + turn);
+			SetVisual(coordX, coordY, aiState);
+			UpdateGridValues(coordX, coordY, aiState);
+			rowSums = CheckRowSum(gridValues);
+			colSums = CheckColSum(gridValues);
+			diagSums = CheckDiagSum(gridValues);
+			_isPlayerTurn = true;
 
-		turn += 1;
-		Debug.Log("Turn: " + turn);
-		SetVisual(coordX, coordY, aiState);
-		UpdateGridValues(coordX, coordY, aiState);
-		rowSums = CheckRowSum(gridValues);
-		colSums = CheckColSum(gridValues);
-		diagSums = CheckDiagSum(gridValues);
-		_isPlayerTurn = true;
-
-		Debug.Log("Row1 Sum: " + rowSums[0] + "  Row2 Sums: " + rowSums[1] + " Row3 Sums: " + rowSums[2]);
-		Debug.Log("Col1 Sum: " + colSums[0] + "  Col2 Sums: " + colSums[1] + " Col3 Sums: " + colSums[2]);
-		Debug.Log("Diag1 Sum: " + diagSums[0] + "  Diag2 Sum: " + diagSums[1]);
+			Debug.Log("Row1 Sum: " + rowSums[0] + "  Row2 Sums: " + rowSums[1] + " Row3 Sums: " + rowSums[2]);
+			Debug.Log("Col1 Sum: " + colSums[0] + "  Col2 Sums: " + colSums[1] + " Col3 Sums: " + colSums[2]);
+			Debug.Log("Diag1 Sum: " + diagSums[0] + "  Diag2 Sum: " + diagSums[1]);
+		}
+	
 	}
 
-	private void SetVisual(int coordX, int coordY, TicTacToeState targetState)
-	{
+	private void SetVisual(int coordX, int coordY, TicTacToeState targetState) {
 		Instantiate(
 			targetState == TicTacToeState.circle ? _oPrefab : _xPrefab,
 			_triggers[coordX, coordY].transform.position,
 			Quaternion.identity
 		);
 	}
+
+	IEnumerator AIDelay() {
+		yield return new WaitForSeconds(1.5f);
+		aiDelayFinished = true;
+    }
 
 	private void UpdateGridValues(int row, int col, TicTacToeState state) {
 		if(state == TicTacToeState.cross) {
