@@ -53,6 +53,7 @@ public class TicTacToeAI : MonoBehaviour {
 	private int turn = 0;
 	private bool isWinningMove;
 	private bool aiDelayFinished;
+	private bool isAIDelaying;
 
 	[SerializeField] private int turn2x, turn2y, turn4x, turn4y, turn6x, turn6y;
 	
@@ -69,105 +70,68 @@ public class TicTacToeAI : MonoBehaviour {
 
     private void Update() {
         if(!_isPlayerTurn) {
-			if(turn == 2) {
 
-				//This assumes AI will always go second
-				//if a corner has been taken (0,0)(0,2)(2,0) or (2,2), take the center grid
-				if(gridValues[0,0] == -1 || gridValues[0,2] == -1 || gridValues[2,0] == -1 || gridValues[2,2] == -1) {
-					//Debug.Log("Corner grid has been taken on first move. AI Takes center grid");
-					StartCoroutine(AIDelay());
-					if(aiDelayFinished) {
+				if (turn == 2) {
+
+					//This assumes AI will always go second
+					//if a corner has been taken (0,0)(0,2)(2,0) or (2,2), take the center grid
+					if (gridValues[0, 0] == -1 || gridValues[0, 2] == -1 || gridValues[2, 0] == -1 || gridValues[2, 2] == -1) {
+						//Debug.Log("Corner grid has been taken on first move. AI Takes center grid");
+						
 						AiSelects(1, 1);
-						aiDelayFinished = false;
-					}
-					
-                } else if (gridValues[1,1] == -1) {
-					//Debug.Log("Player took center position on first move. Take a random corner grid.");
 
-					//possible corner grids are at (0,0), (0,2), (2,0) or (2,2)
-					//row value is either 0 or 2, col value is either 0 or 2
-					int[] cornerGrids = new int[2] { 0, 2 };
+					} else if (gridValues[1, 1] == -1) {
+						//Debug.Log("Player took center position on first move. Take a random corner grid.");
 
-					//sets cornerGrids[0]=0 or cornerGrids[1]=2 for the corner row
-					int randomCornerRow = cornerGrids[UnityEngine.Random.Range(0, 2)]; 
-					int randomCornerCol = cornerGrids[UnityEngine.Random.Range(0, 2)];
+						//possible corner grids are at (0,0), (0,2), (2,0) or (2,2)
+						//row value is either 0 or 2, col value is either 0 or 2
+						int[] cornerGrids = new int[2] { 0, 2 };
 
-					StartCoroutine(AIDelay());
-					if (aiDelayFinished) {
+						//sets cornerGrids[0]=0 or cornerGrids[1]=2 for the corner row
+						int randomCornerRow = cornerGrids[UnityEngine.Random.Range(0, 2)];
+						int randomCornerCol = cornerGrids[UnityEngine.Random.Range(0, 2)];
+
 						AiSelects(randomCornerRow, randomCornerCol);
-						aiDelayFinished = false;
-					}
-                } else {
-					//Debug.Log("Player selected other than center or corner grid on opening move");
-					//Player has positioned his cirlce in one of the outside center grids (1,3, 5 or 7)
-					//AI picks a random corner grid for best outcome
-					//possible corner grids are at (0,0), (0,2), (2,0) or (2,2)
-					//row value is either 0 or 2, col value is either 0 or 2
-					int[] cornerGrids = new int[2] { 0, 2 };
+					} else {
+						//Debug.Log("Player selected other than center or corner grid on opening move");
+						//Player has positioned his cirlce in one of the outside center grids (1,3, 5 or 7)
+						//AI picks a random corner grid for best outcome
+						//possible corner grids are at (0,0), (0,2), (2,0) or (2,2)
+						//row value is either 0 or 2, col value is either 0 or 2
+						int[] cornerGrids = new int[2] { 0, 2 };
 
-					//sets cornerGrids[0]=0 or cornerGrids[1]=2 for the corner row
-					int randomCornerRow = cornerGrids[UnityEngine.Random.Range(0, 2)];
-					int randomCornerCol = cornerGrids[UnityEngine.Random.Range(0, 2)];
+						//sets cornerGrids[0]=0 or cornerGrids[1]=2 for the corner row
+						int randomCornerRow = cornerGrids[UnityEngine.Random.Range(0, 2)];
+						int randomCornerCol = cornerGrids[UnityEngine.Random.Range(0, 2)];
 
-					StartCoroutine(AIDelay());
-					if (aiDelayFinished) {
 						AiSelects(randomCornerRow, randomCornerCol);
-						aiDelayFinished = false;
 					}
 				}
-            }
 
-			if(turn == 4) {
-				//AiSelects(turn4x,turn4y);
-				isWinningMove = CheckIfWinningMove();
-				Debug.Log("Is Winning Move? " + isWinningMove);
-				if (isWinningMove) {
-					int[] emptyGridCoordinates = MakeWinningMove(-20);
-					AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
-				}
+				if (turn == 4 || turn == 6 || turn ==8) {
+					//AiSelects(turn4x,turn4y);
+					isWinningMove = CheckIfWinningMove();
+					//Debug.Log("Is Winning Move? " + isWinningMove);
+					if (isWinningMove) {
+						int[] emptyGridCoordinates = MakeWinningMove(-20);
+						AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
+					}
 
 				if (!isWinningMove) {
-					Debug.Log("Not a winning move, AI should Block or exploit");
+
 					int[] emptyGridCoordinates = MakeWinningMove(-2);
-					AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
-				}
-			}
+					if (gridValues[emptyGridCoordinates[0], emptyGridCoordinates[1]] != -10) {
 
-			if(turn == 6) {
-
-				//First priority is to make a winning move if can win on the next move
-				isWinningMove = CheckIfWinningMove();
-				Debug.Log("Is Winning Move? " + isWinningMove);
-				if(isWinningMove) {
-					int[] emptyGridCoordinates = MakeWinningMove(-20);
-					AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
-                }
-
-				if(!isWinningMove) {
-					int[] emptyGridCoordinates = MakeWinningMove(-2);
-					AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
-				}
-				
-			
-            }
-
-			if (turn == 8) {
-
-				//First priority is to make a winning move if can win on the next move
-				isWinningMove = CheckIfWinningMove();
-				Debug.Log("Is Winning Move? " + isWinningMove);
-				if (isWinningMove) {
-					int[] emptyGridCoordinates = MakeWinningMove(-20);
-					AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
+						AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
+						Debug.Log("Grid Coordinates X: " + emptyGridCoordinates[0] + "Grid Coordinates Y: " + emptyGridCoordinates[1]);
+					} else {
+						int[] nextCoordinates = MakeWinningMove(-10);
+						AiSelects(nextCoordinates[0], nextCoordinates[1]);
+					}
 				}
 
-				if (!isWinningMove) {
-					int[] emptyGridCoordinates = MakeWinningMove(-2);
-					AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
-				}
+			    }
 
-
-			}
 		}
     }
 
@@ -237,10 +201,17 @@ public class TicTacToeAI : MonoBehaviour {
 		);
 	}
 
-	IEnumerator AIDelay() {
+	//IEnumerator AIDelay() {
+	//	yield return new WaitForSeconds(1.5f);
+	//	aiDelayFinished = true;
+    //}
+
+	private IEnumerator AIDelay() {
+		isAIDelaying = true;
 		yield return new WaitForSeconds(1.5f);
 		aiDelayFinished = true;
-    }
+		isAIDelaying = false;
+	}
 
 	private void UpdateGridValues(int row, int col, TicTacToeState state) {
 		if(state == TicTacToeState.cross) {
