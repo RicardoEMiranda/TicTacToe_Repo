@@ -72,19 +72,38 @@ public class TicTacToeAI : MonoBehaviour {
 				AiSelects(turn2x, turn2y);
             }
 
-			if(turn ==4) {
-				AiSelects(turn4x,turn4y);
-            }
+			if(turn >= 4) {
+				//AiSelects(turn4x,turn4y);
+				isWinningMove = CheckIfWinningMove();
+				Debug.Log("Is Winning Move? " + isWinningMove);
+				if (isWinningMove) {
+					int[] emptyGridCoordinates = MakeWinningMove(-20);
+					AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
+				}
+
+				if (!isWinningMove) {
+					int[] emptyGridCoordinates = MakeWinningMove(-2);
+					AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
+				}
+			}
 
 			if(turn == 6) {
 
+				/*//First priority is to make a winning move if can win on the next move
 				isWinningMove = CheckIfWinningMove();
 				Debug.Log("Is Winning Move? " + isWinningMove);
-
 				if(isWinningMove) {
-					int[] emptyGridCoordinates = MakeWinningMove();
+					int[] emptyGridCoordinates = MakeWinningMove(-20);
 					AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
                 }
+
+				if(!isWinningMove) {
+					int[] emptyGridCoordinates = MakeWinningMove(-2);
+					AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
+				}/*
+				//If there are no winning moves, check if need to block the player from winning
+				//this happens when the values on any given row, column or diagonal is -2
+
 
 				//check sum of each row. If -20, find row and column with the empty grid
 				//and send coordinates to AI for blocking
@@ -261,7 +280,7 @@ public class TicTacToeAI : MonoBehaviour {
 		return diagSum;
     }
 
-	private int FindGridForWin(int[] vals) {
+	private int FindEmptyGrid(int[] vals) {
 		int result = -1;
 		for(int i =0; i<3; i++) {
 			if(vals[i] == 0) {
@@ -272,16 +291,6 @@ public class TicTacToeAI : MonoBehaviour {
 		return result;
     }
 
-	private int FindDiagGridForWin(int[] array) {
-		int result = -1;
-		for(int i=0; i<3; i++) {
-			if(array[i] == 0) {
-				result = i;
-				break;
-            }
-        }
-		return result;
-    }
 
 	private int[] ReturnRowArrayValues(int[,] gridValues, int row) {
 		int[] array = new int[3];
@@ -327,50 +336,50 @@ public class TicTacToeAI : MonoBehaviour {
 		return false;
     }
 
-	private int[] MakeWinningMove() {
+	private int[] MakeWinningMove(int moveDeterminant) {
 		//check sum of each row. If -20, find row and column with the empty grid
 		//and send coordinates to AI for blocking
-		if (rowSums[0] == -20) {
+		if (rowSums[0] == moveDeterminant) {
 			row = 0;
 			int[] array = ReturnRowArrayValues(gridValues, 0);
-			col = FindGridForWin(array);
+			col = FindEmptyGrid(array);
 		}
 
-		if (rowSums[1] == -20) {
+		if (rowSums[1] == moveDeterminant) {
 			row = 1;
 			int[] array = ReturnRowArrayValues(gridValues, 1);
-			col = FindGridForWin(array);
+			col = FindEmptyGrid(array);
 		}
 
-		if (rowSums[2] == -20) {
+		if (rowSums[2] == moveDeterminant) {
 			row = 2;
 			int[] array = ReturnRowArrayValues(gridValues, 2);
-			col = FindGridForWin(array);
+			col = FindEmptyGrid(array);
 		}
 
 		//check sum of each column. If -20, find row and column with the empty grid
 		//and send coordinates to AI for blocking
-		if (colSums[0] == -20) {
+		if (colSums[0] == moveDeterminant) {
 			col = 0;
 			int[] array = ReturnColArrayValues(gridValues, 0);
-			row = FindGridForWin(array);
+			row = FindEmptyGrid(array);
 		}
 
-		if (colSums[1] == -20) {
+		if (colSums[1] == moveDeterminant) {
 			col = 1;
 			int[] array = ReturnColArrayValues(gridValues, 1);
-			row = FindGridForWin(array);
+			row = FindEmptyGrid(array);
 		}
 
-		if (colSums[2] == -20) {
+		if (colSums[2] == moveDeterminant) {
 			col = 2;
 			int[] array = ReturnColArrayValues(gridValues, 2);
-			row = FindGridForWin(array);
+			row = FindEmptyGrid(array);
 		}
 
 		//check sum of diagonal going from bottom to top, if -20 
 		//find row and column with the empty grid and send coordinates to AI for blocking
-		if (diagSums[0] == -20) {
+		if (diagSums[0] == moveDeterminant) {
 			int[] array = ReturnBTDiagonalArrayValues(gridValues);
 			if (array[0] == 0) {
 				row = 2;
@@ -388,7 +397,7 @@ public class TicTacToeAI : MonoBehaviour {
 
 		//check sum of diagonal going from top to bottom , if -20 
 		//find row and column with the empty grid and send coordinates to AI for blocking
-		if (diagSums[1] == -20) {
+		if (diagSums[1] == moveDeterminant) {
 			int[] array = ReturnTBDiagonalArrayValues(gridValues);
 			if (array[0] == 0) {
 				row = 0;
