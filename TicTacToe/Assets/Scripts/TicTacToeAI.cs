@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-public enum TicTacToeState{none, cross, circle}
+/*public enum TicTacToeState{none, cross, circle}
 
 [System.Serializable]
 public class WinnerEvent : UnityEvent<int>
@@ -443,4 +443,4 @@ public class TicTacToeAI : MonoBehaviour {
 		//return {1,1} means 1-true (game over) and 1-AI wins
 		return result;
     }
-}
+}*/

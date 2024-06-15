@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class ClickTrigger : MonoBehaviour
 {
-	TicTacToeAI _ai;
+	TicTacToeAI_ _ai;
 
 	[SerializeField]
 	private int _myCoordX = 0;
@@ -16,7 +16,7 @@ public class ClickTrigger : MonoBehaviour
 
 	private void Awake()
 	{
-		_ai = FindObjectOfType<TicTacToeAI>();
+		_ai = FindObjectOfType<TicTacToeAI_>();
 	}
 
 	private void Start(){
