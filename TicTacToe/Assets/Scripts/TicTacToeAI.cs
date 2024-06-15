@@ -54,6 +54,7 @@ public class TicTacToeAI : MonoBehaviour {
 	private bool isWinningMove;
 	private bool aiDelayFinished;
 	private bool isAIDelaying;
+	private bool gameOver;
 
 	[SerializeField] private int turn2x, turn2y, turn4x, turn4y, turn6x, turn6y;
 	
@@ -112,20 +113,29 @@ public class TicTacToeAI : MonoBehaviour {
 					if (isWinningMove) {
 						int[] emptyGridCoordinates = MakeWinningMove(-20);
 						AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
+
+						//Since this is a winning move, check 
+						//Check winning row, column or diagonal equals -30 or -3
+						int[] winState = CheckWinState();
+						if(winState[0] == 1) {
+							Debug.Log("Game Over");
+						}
+
 					}
 
-				if (!isWinningMove) {
+					if (!isWinningMove) {
 
-					int[] emptyGridCoordinates = MakeWinningMove(-2);
-					if (gridValues[emptyGridCoordinates[0], emptyGridCoordinates[1]] != -10) {
+						int[] emptyGridCoordinates = MakeWinningMove(-2);
+						if (gridValues[emptyGridCoordinates[0], emptyGridCoordinates[1]] != -10) {
 
-						AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
-						//Debug.Log("Grid Coordinates X: " + emptyGridCoordinates[0] + "Grid Coordinates Y: " + emptyGridCoordinates[1]);
-					} else {
-						int[] nextCoordinates = MakeWinningMove(-10);
-						AiSelects(nextCoordinates[0], nextCoordinates[1]);
+							AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
+							//Debug.Log("Grid Coordinates X: " + emptyGridCoordinates[0] + "Grid Coordinates Y: " + emptyGridCoordinates[1]);
+						} else {
+							int[] nextCoordinates = MakeWinningMove(-10);
+							AiSelects(nextCoordinates[0], nextCoordinates[1]);
+						}
+
 					}
-				}
 
 			    }
 		}
@@ -300,83 +310,137 @@ public class TicTacToeAI : MonoBehaviour {
     }
 
 	private int[] MakeWinningMove(int moveDeterminant) {
-		//check sum of each row. If -20, find row and column with the empty grid
-		//and send coordinates to AI for blocking
-		if (rowSums[0] == moveDeterminant) {
-			row = 0;
-			int[] array = ReturnRowArrayValues(gridValues, 0);
-			col = FindEmptyGrid(array);
-		}
 
-		if (rowSums[1] == moveDeterminant) {
-			row = 1;
-			int[] array = ReturnRowArrayValues(gridValues, 1);
-			col = FindEmptyGrid(array);
-		}
 
-		if (rowSums[2] == moveDeterminant) {
-			row = 2;
-			int[] array = ReturnRowArrayValues(gridValues, 2);
-			col = FindEmptyGrid(array);
-		}
+		if (!gameOver) {
+			//check sum of each row. If -20, find row and column with the empty grid
+			//and send coordinates to AI for blocking
+			if (rowSums[0] == moveDeterminant) {
 
-		//check sum of each column. If -20, find row and column with the empty grid
-		//and send coordinates to AI for blocking
-		if (colSums[0] == moveDeterminant) {
-			col = 0;
-			int[] array = ReturnColArrayValues(gridValues, 0);
-			row = FindEmptyGrid(array);
-		}
-
-		if (colSums[1] == moveDeterminant) {
-			col = 1;
-			int[] array = ReturnColArrayValues(gridValues, 1);
-			row = FindEmptyGrid(array);
-		}
-
-		if (colSums[2] == moveDeterminant) {
-			col = 2;
-			int[] array = ReturnColArrayValues(gridValues, 2);
-			row = FindEmptyGrid(array);
-		}
-
-		//check sum of diagonal going from bottom to top, if -20 
-		//find row and column with the empty grid and send coordinates to AI for blocking
-		if (diagSums[0] == moveDeterminant) {
-			int[] array = ReturnBTDiagonalArrayValues(gridValues);
-			if (array[0] == 0) {
-				row = 2;
-				col = 0;
-			} else if (array[1] == 0) {
-				row = 1;
-				col = 1;
-			} else if (array[2] == 0) {
 				row = 0;
-				col = 2;
-			} else {
-				Debug.Log("Diagonal Array exception");
+				int[] array = ReturnRowArrayValues(gridValues, 0);
+				col = FindEmptyGrid(array);
 			}
-		}
 
-		//check sum of diagonal going from top to bottom , if -20 
-		//find row and column with the empty grid and send coordinates to AI for blocking
-		if (diagSums[1] == moveDeterminant) {
-			int[] array = ReturnTBDiagonalArrayValues(gridValues);
-			if (array[0] == 0) {
-				row = 0;
-				col = 0;
-			} else if (array[1] == 0) {
+			if (rowSums[1] == moveDeterminant) {
 				row = 1;
-				col = 1;
-			} else if (array[2] == 0) {
-				row = 2;
-				col = 2;
-			} else {
-				Debug.Log("Diagonal Array exception");
+				int[] array = ReturnRowArrayValues(gridValues, 1);
+				col = FindEmptyGrid(array);
 			}
-		}
 
+			if (rowSums[2] == moveDeterminant) {
+				row = 2;
+				int[] array = ReturnRowArrayValues(gridValues, 2);
+				col = FindEmptyGrid(array);
+			}
+
+			//check sum of each column. If -20, find row and column with the empty grid
+			//and send coordinates to AI for blocking
+			if (colSums[0] == moveDeterminant) {
+				col = 0;
+				int[] array = ReturnColArrayValues(gridValues, 0);
+				row = FindEmptyGrid(array);
+			}
+
+			if (colSums[1] == moveDeterminant) {
+				col = 1;
+				int[] array = ReturnColArrayValues(gridValues, 1);
+				row = FindEmptyGrid(array);
+			}
+
+			if (colSums[2] == moveDeterminant) {
+				col = 2;
+				int[] array = ReturnColArrayValues(gridValues, 2);
+				row = FindEmptyGrid(array);
+			}
+
+			//check sum of diagonal going from bottom to top, if -20 
+			//find row and column with the empty grid and send coordinates to AI for blocking
+			if (diagSums[0] == moveDeterminant) {
+				int[] array = ReturnBTDiagonalArrayValues(gridValues);
+				if (array[0] == 0) {
+					row = 2;
+					col = 0;
+				} else if (array[1] == 0) {
+					row = 1;
+					col = 1;
+				} else if (array[2] == 0) {
+					row = 0;
+					col = 2;
+				} else {
+					Debug.Log("Diagonal Array exception");
+				}
+			}
+
+			//check sum of diagonal going from top to bottom , if -20 
+			//find row and column with the empty grid and send coordinates to AI for blocking
+			if (diagSums[1] == moveDeterminant) {
+				int[] array = ReturnTBDiagonalArrayValues(gridValues);
+				if (array[0] == 0) {
+					row = 0;
+					col = 0;
+				} else if (array[1] == 0) {
+					row = 1;
+					col = 1;
+				} else if (array[2] == 0) {
+					row = 2;
+					col = 2;
+				} else {
+					Debug.Log("Diagonal Array exception");
+				}
+			}
+			
+		}
 		int[] emptyGridCoordinates = new int[2] { row, col };
 		return emptyGridCoordinates;
+
 	}
+
+	private int[] CheckWinState() {
+		int gameOverState = 0;
+		int playerWinState = -1;
+		int[] result = new int[2] { gameOverState, playerWinState };
+
+
+		if(rowSums[0] == -30 || rowSums[1] == -30 || rowSums[2] == -30) {
+			gameOverState = 1;
+			playerWinState = 1;
+			result[0] = gameOverState;
+			result[1] = playerWinState;
+        } else if(rowSums[0] == -3 || rowSums[1] == -3 || rowSums[2] == -3) {
+			gameOverState = 1;
+			playerWinState = 0;
+			result[0] = gameOverState;
+			result[1] = playerWinState;
+		}
+
+		if(colSums[0] == -30 || colSums[1] == -30 || colSums[2] == -30) {
+			gameOverState = 1;
+			playerWinState = 1;
+			result[0] = gameOverState;
+			result[1] = playerWinState;
+		} else if (rowSums[0] == -3 || rowSums[1] == -3 || rowSums[2] == -3) {
+			gameOverState = 1;
+			playerWinState = 0;
+			result[0] = gameOverState;
+			result[1] = playerWinState;
+		}
+
+		if (diagSums[0] == -30 || diagSums[1] == -30) {
+			gameOverState = 1;
+			playerWinState = 1;
+			result[0] = gameOverState;
+			result[1] = playerWinState;
+		} else if (rowSums[0] == -3 || rowSums[1] == -3 || rowSums[2] == -3) {
+			gameOverState = 1;
+			playerWinState = 0;
+			result[0] = gameOverState;
+			result[1] = playerWinState;
+		}
+
+		//gameOverState (0 - false, game not over), (1-true, game Over)
+		//0 player wins, 1 AI wins
+		//return {1,1} means 1-true (game over) and 1-AI wins
+		return result;
+    }
 }
