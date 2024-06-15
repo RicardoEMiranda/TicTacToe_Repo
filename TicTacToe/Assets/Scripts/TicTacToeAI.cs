@@ -72,14 +72,11 @@ public class TicTacToeAI : MonoBehaviour {
         if(!_isPlayerTurn) {
 
 				if (turn == 2) {
-
 					//This assumes AI will always go second
 					//if a corner has been taken (0,0)(0,2)(2,0) or (2,2), take the center grid
 					if (gridValues[0, 0] == -1 || gridValues[0, 2] == -1 || gridValues[2, 0] == -1 || gridValues[2, 2] == -1) {
 						//Debug.Log("Corner grid has been taken on first move. AI Takes center grid");
-						
 						AiSelects(1, 1);
-
 					} else if (gridValues[1, 1] == -1) {
 						//Debug.Log("Player took center position on first move. Take a random corner grid.");
 
@@ -123,7 +120,7 @@ public class TicTacToeAI : MonoBehaviour {
 					if (gridValues[emptyGridCoordinates[0], emptyGridCoordinates[1]] != -10) {
 
 						AiSelects(emptyGridCoordinates[0], emptyGridCoordinates[1]);
-						Debug.Log("Grid Coordinates X: " + emptyGridCoordinates[0] + "Grid Coordinates Y: " + emptyGridCoordinates[1]);
+						//Debug.Log("Grid Coordinates X: " + emptyGridCoordinates[0] + "Grid Coordinates Y: " + emptyGridCoordinates[1]);
 					} else {
 						int[] nextCoordinates = MakeWinningMove(-10);
 						AiSelects(nextCoordinates[0], nextCoordinates[1]);
@@ -131,7 +128,6 @@ public class TicTacToeAI : MonoBehaviour {
 				}
 
 			    }
-
 		}
     }
 
@@ -163,7 +159,9 @@ public class TicTacToeAI : MonoBehaviour {
 			rowSums = CheckRowSum(gridValues);
 			colSums = CheckColSum(gridValues);
 			diagSums = CheckDiagSum(gridValues);
-			_isPlayerTurn = false;
+
+			StartCoroutine(AIDelay(false));
+			//_isPlayerTurn = false;
 
 			Debug.Log("Row1 Sum: " + rowSums[0] + "  Row2 Sums: " + rowSums[1] + " Row3 Sums: " + rowSums[2]);
 			Debug.Log("Col1 Sum: " + colSums[0] + "  Col2 Sums: " + colSums[1] + " Col3 Sums: " + colSums[2]);
@@ -184,7 +182,9 @@ public class TicTacToeAI : MonoBehaviour {
 			rowSums = CheckRowSum(gridValues);
 			colSums = CheckColSum(gridValues);
 			diagSums = CheckDiagSum(gridValues);
-			_isPlayerTurn = true;
+
+			StartCoroutine(AIDelay(true));
+			//_isPlayerTurn = true;
 
 			Debug.Log("Row1 Sum: " + rowSums[0] + "  Row2 Sums: " + rowSums[1] + " Row3 Sums: " + rowSums[2]);
 			Debug.Log("Col1 Sum: " + colSums[0] + "  Col2 Sums: " + colSums[1] + " Col3 Sums: " + colSums[2]);
@@ -201,16 +201,12 @@ public class TicTacToeAI : MonoBehaviour {
 		);
 	}
 
-	//IEnumerator AIDelay() {
-	//	yield return new WaitForSeconds(1.5f);
-	//	aiDelayFinished = true;
-    //}
-
-	private IEnumerator AIDelay() {
-		isAIDelaying = true;
+	private IEnumerator AIDelay(bool condition) {
+		//isAIDelaying = true;
 		yield return new WaitForSeconds(1.5f);
-		aiDelayFinished = true;
-		isAIDelaying = false;
+		//aiDelayFinished = true;
+		//isAIDelaying = false;
+		_isPlayerTurn = condition;
 	}
 
 	private void UpdateGridValues(int row, int col, TicTacToeState state) {
@@ -258,7 +254,6 @@ public class TicTacToeAI : MonoBehaviour {
         }
 		return result;
     }
-
 
 	private int[] ReturnRowArrayValues(int[,] gridValues, int row) {
 		int[] array = new int[3];
