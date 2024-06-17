@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Events;
 
 public enum TicTacToeState{none, cross, circle}
+public enum Winner { none, player, ai };
 
 [System.Serializable]
 public class WinnerEvent : UnityEvent<int>
@@ -46,10 +47,13 @@ public class TicTacToeAI_ : MonoBehaviour
 	private int[] ai_moveGrid;
 	private int turn;
 	private bool aiFinished;
+	private bool gameOver;
+	Winner winner;
+
 
 	[SerializeField] private bool createTestBoard, board1, board2;
-	private bool boardStateDeclared;
-	private int[] blockingGrid;
+	//private bool boardStateDeclared;
+	//private int[] blockingGrid;
 	private int[,] scoreBoard;
 	
 	private void Awake()
@@ -60,10 +64,11 @@ public class TicTacToeAI_ : MonoBehaviour
 	}
 
     private void Start() {
-		turn = 1;
+		turn = 0;
 		_isPlayerTurn = true;
-		blockingGrid = new int[2] { -1,-1};
+		//blockingGrid = new int[2] { -1,-1};
 		scoreBoard = new int[3,3] { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
+		winner = Winner.none;
 
 
 		//initialize boardState
@@ -77,33 +82,6 @@ public class TicTacToeAI_ : MonoBehaviour
         }
 		PrintBoard(boardRep);
 
-		/*if(createTestBoard && board1) {
-			boardState[0, 0] = TicTacToeState.cross;
-			boardState[0, 1] = TicTacToeState.circle;
-			boardState[0, 2] = TicTacToeState.none;
-
-			boardState[1, 0] = TicTacToeState.circle;
-			boardState[1, 1] = TicTacToeState.cross;
-			boardState[1, 2] = TicTacToeState.none;
-
-			boardState[2, 0] = TicTacToeState.none;
-			boardState[2, 1] = TicTacToeState.none;
-			boardState[2, 2] = TicTacToeState.circle;
-		}
-
-		if (createTestBoard && board2) {
-			boardState[0, 0] = TicTacToeState.cross;
-			boardState[0, 1] = TicTacToeState.circle;
-			boardState[0, 2] = TicTacToeState.cross;
-
-			boardState[1, 0] = TicTacToeState.cross;
-			boardState[1, 1] = TicTacToeState.circle;
-			boardState[1, 2] = TicTacToeState.circle;
-
-			boardState[2, 0] = TicTacToeState.circle;
-			boardState[2, 1] = TicTacToeState.cross;
-			boardState[2, 2] = TicTacToeState.circle;
-		}*/
 	}
 
     public void StartAI(int AILevel){
@@ -113,51 +91,51 @@ public class TicTacToeAI_ : MonoBehaviour
 
 	void Update() {
 
-		/*if(createTestBoard && !boardStateDeclared) {
-			bool boardFull = CheckBoardIsFull(boardState);
-
-			if(boardFull) {
-				Debug.Log("Board is full");
-
-			} else if(!boardFull) {
-				Debug.Log("Board is not full");
-
-			} else {
-				Debug.Log("Check Board Full method for exception.");
-            }
-			boardStateDeclared = true;
-        }*/
-
-		if(!_isPlayerTurn && !aiFinished) {
-			Debug.Log("AI's Turn");
+		if(!_isPlayerTurn && !aiFinished && !gameOver) {
+			//Debug.Log("AI's Turn");
 
 			//check board for potential winning move & block
 			//if isWinningMove (true or false), get empty grid and AiSelects(emptyGridX, emptyGridY)
 			int winningRow;
 			int winningCol;
 			bool hasWinningMove = CheckIfWinningMove(scoreBoard, out winningRow, out winningCol);
+
+			//Opening Move for AI
+			//Player moves on odd turns (turn =1, 3, 5, 7 9). AI moves on even turns (turn=2,4,6,8)
+			if(turn==2 && !_isPlayerTurn && !aiFinished) {
+				if (scoreBoard[1, 1] == -1) {
+					int[] keyGrids = new int[2] { 0, 2 };
+					int keyRow = keyGrids[UnityEngine.Random.Range(0, 2)];
+					int keyCol = keyGrids[UnityEngine.Random.Range(0, 2)];
+					AiSelects(keyRow, keyCol);
+				} else {
+					AiSelects(1, 1);
+                }
+            }
+
+			if(turn>=4) {
+				if (hasWinningMove && !gameOver) {
+					Debug.Log("Winning Move Detected");
+					AiSelects(winningRow, winningCol);
+				} else if (!gameOver) {
+					//else, use FindNextMove and MyMiniMaxMethod to determine next move
+
+					ai_moveGrid = FindNextMove(boardState);
+					//Debug.Log("Next Move is:  X-" + ai_moveGrid[0] + "  Y-" + ai_moveGrid[1]);
+					//AiSelects(1, 1);
+					AiSelects(ai_moveGrid[0], ai_moveGrid[1]);
+				}
+			}
 			
 
-			if(hasWinningMove) {
-				Debug.Log("Winning Move Detected");
-				AiSelects(winningRow, winningCol);
-            } else {
-				//else, use FindNextMove and MyMiniMaxMethod to determine next move
-				
-				ai_moveGrid = FindNextMove(boardState);
-				//Debug.Log("Next Move is:  X-" + ai_moveGrid[0] + "  Y-" + ai_moveGrid[1]);
-				//AiSelects(1, 1);
-				AiSelects(ai_moveGrid[0], ai_moveGrid[1]);
-			}
-
-			/*//else, use FindNextMove and MyMiniMaxMethod to determine next move
-
-			ai_moveGrid = FindNextMove(boardState);
-			//Debug.Log("Next Move is:  X-" + ai_moveGrid[0] + "  Y-" + ai_moveGrid[1]);
-			//AiSelects(1, 1);
-			AiSelects(ai_moveGrid[0], ai_moveGrid[1]);*/
         }
 
+		gameOver = CheckIfGameOver(scoreBoard, out winner);
+		if (gameOver) {
+			_isPlayerTurn = true;
+			aiFinished = true;
+			Debug.Log("Winner is: " + winner);
+		}
 	}
 
 	public void RegisterTransform(int myCoordX, int myCoordY, ClickTrigger clickTrigger)
@@ -176,8 +154,10 @@ public class TicTacToeAI_ : MonoBehaviour
 
 		//check that grid state is none (blank) before allowing player to select
 		//this will prevent the player form placing more than one cirlce in a chosen grid
-		if(boardState[coordX,coordY] == TicTacToeState.none) {
-			SetVisual(coordX, coordY, playerState);
+		if(boardState[coordX,coordY] == TicTacToeState.none && turn!=2 && !gameOver) {
+			turn += 1;
+			Debug.Log("Turn: " + turn);
+            SetVisual(coordX, coordY, playerState);
 			boardState[coordX, coordY] = TicTacToeState.circle;
 			boardRep[coordX, coordY] = " o";
 			scoreBoard[coordX, coordY] = -1;
@@ -197,8 +177,10 @@ public class TicTacToeAI_ : MonoBehaviour
 
 		//check that grid state is none (blank) before allowing player to select
 		//this will prevent the player form placing more than one cirlce in a chosen grid
-		if (boardState[coordX, coordY] == TicTacToeState.none) {
-			Debug.Log("Ai Selects X: " + coordX + "  Y: " + coordY);
+		if (boardState[coordX, coordY] == TicTacToeState.none && !gameOver) {
+			turn += 1;
+			Debug.Log("Turn: " + turn);
+			//Debug.Log("Ai Selects X: " + coordX + "  Y: " + coordY);
 			SetVisual(coordX, coordY, aiState);
 			boardState[coordX, coordY] = TicTacToeState.cross;
 			boardRep[coordX, coordY] = " x";
@@ -213,6 +195,77 @@ public class TicTacToeAI_ : MonoBehaviour
 			//turn += 1;
 		}
 
+	}
+
+	private bool CheckIfGameOver(int[,] board, out Winner winner) {
+		
+		//check rows for either ai wins - xxx or for player wins - 000
+		for (int row = 0; row < _gridSize; row++) {
+			int sumRow = 0;
+			
+			for (int col = 0; col < _gridSize; col++) {
+				sumRow += board[row, col];
+			}
+
+			if (sumRow == -3) {
+				winner = Winner.player;
+				return true;
+			} else if(sumRow == 3) {
+				winner = Winner.ai;
+				return true;
+            }
+		}
+
+		//check columns for either ai wins or player wins
+		for (int col = 0; col < _gridSize; col++) {
+			int sumCol = 0;
+
+			for (int row = 0; row < _gridSize; row++) {
+				sumCol += board[row, col];
+			}
+
+			if (sumCol == -3) {
+				winner = Winner.player;
+				return true;
+			} else if (sumCol == 3) {
+				winner = Winner.ai;
+				return true;
+			}
+		}
+
+		//check first diagonal (top left to lower right)
+		int sumDiag1 = 0;
+
+		for (int i = 0; i < _gridSize; i++) {
+			sumDiag1 += board[i, i];
+		}
+
+		if (sumDiag1 == -3) {
+			winner = Winner.player;
+			return true;
+		} else if(sumDiag1 == 3) {
+			winner = Winner.ai;
+			return true;
+        }
+
+
+		//check second diagonal (top right to lower left)
+		int sumDiag2 = 0;
+
+		for (int i = 0; i < _gridSize; i++) {
+			sumDiag2 += board[i, 2 - i];
+		}
+
+		if (sumDiag2 == -3) {
+			winner = Winner.player;
+			return true;
+		} else if(sumDiag2 == 3) {
+			winner = Winner.ai;
+			return true;
+        }
+
+		winner = Winner.none;
+		return false;
 	}
 
 	private bool CheckIfWinningMove(int[,] board, out int winningRow, out int winningCol) {
