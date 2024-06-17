@@ -94,12 +94,6 @@ public class TicTacToeAI_ : MonoBehaviour
 		if(!_isPlayerTurn && !aiFinished && !gameOver) {
 			//Debug.Log("AI's Turn");
 
-			//check board for potential winning move & block
-			//if isWinningMove (true or false), get empty grid and AiSelects(emptyGridX, emptyGridY)
-			int winningRow;
-			int winningCol;
-			bool hasWinningMove = CheckIfWinningMove(scoreBoard, out winningRow, out winningCol);
-
 			//Opening Move for AI
 			//Player moves on odd turns (turn =1, 3, 5, 7 9). AI moves on even turns (turn=2,4,6,8)
 			if(turn==2 && !_isPlayerTurn && !aiFinished) {
@@ -113,11 +107,20 @@ public class TicTacToeAI_ : MonoBehaviour
                 }
             }
 
-			if(turn>=4) {
+
+			//check board for potential winning move & block
+			//if isWinningMove (true or false), get empty grid and AiSelects(emptyGridX, emptyGridY)
+			
+			if (turn>=4) {
+				int winningRow;
+				int winningCol;
+				bool hasWinningMove = CheckIfWinningMove(scoreBoard, out winningRow, out winningCol);
 				if (hasWinningMove && !gameOver) {
 					Debug.Log("Winning Move Detected");
+					Debug.Log("Winnng Row: " + winningRow + "  Winning Column: " + winningCol);
 					AiSelects(winningRow, winningCol);
-				} else if (!gameOver) {
+					//hasWinningMove = false;
+				} else if (!hasWinningMove && !gameOver) {
 					//else, use FindNextMove and MyMiniMaxMethod to determine next move
 
 					ai_moveGrid = FindNextMove(boardState);
@@ -284,11 +287,11 @@ public class TicTacToeAI_ : MonoBehaviour
                 }
             }
 
-			if(sumRow == -2 && emptyCol !=-1) {
+			if(sumRow == 2 && emptyCol !=-1) {
 				winningRow = row;
 				winningCol = emptyCol;
+				Debug.Log("Has winning move at X: " + winningRow + "  Y: " + winningCol);
 				return true;
-				Debug.Log("Row Sum = 2");
             }
         }
 
@@ -306,9 +309,10 @@ public class TicTacToeAI_ : MonoBehaviour
 				}
 			}
 
-			if (sumCol == -2 && emptyRow != -1) {
+			if (sumCol == 2 && emptyRow != -1) {
 				winningRow = emptyRow;
 				winningCol = col;
+				Debug.Log("Has winning move at X: " + winningRow + "  Y: " + winningCol);
 				return true;
 			}
 		}
@@ -327,9 +331,10 @@ public class TicTacToeAI_ : MonoBehaviour
             }
         }
 
-		if(sumDiag1 == -2 && emptyRowDiagonal1 != -1) {
+		if(sumDiag1 == 2 && emptyRowDiagonal1 != -1) {
 			winningRow = emptyRowDiagonal1;
 			winningCol = emptyColDiagonal1;
+			Debug.Log("Has winning move at X: " + winningRow + "  Y: " + winningCol);
 			return true;
         }
 
@@ -347,15 +352,17 @@ public class TicTacToeAI_ : MonoBehaviour
 			}
 		}
 
-		if (sumDiag2 == -2 && emptyRowDiagonal2 != -1) {
+		if (sumDiag2 == 2 && emptyRowDiagonal2 != -1) {
 			winningRow = emptyRowDiagonal2;
 			winningCol = emptyColDiagonal2;
+			Debug.Log("Has winning move at X: " + winningRow + "  Y: " + winningCol);
 			return true;
 		}
 
 		//if not winning move found
 		winningRow = -1;
 		winningCol = -1;
+		Debug.Log("Winning move not detected");
 		return false;
     }
 
