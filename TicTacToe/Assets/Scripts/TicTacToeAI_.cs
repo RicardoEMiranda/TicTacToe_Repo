@@ -143,7 +143,7 @@ public class TicTacToeAI_ : MonoBehaviour
 				AiSelects(winningRow, winningCol);
             } else {
 				//else, use FindNextMove and MyMiniMaxMethod to determine next move
-
+				
 				ai_moveGrid = FindNextMove(boardState);
 				//Debug.Log("Next Move is:  X-" + ai_moveGrid[0] + "  Y-" + ai_moveGrid[1]);
 				//AiSelects(1, 1);
