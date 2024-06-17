@@ -49,6 +49,8 @@ public class TicTacToeAI_ : MonoBehaviour
 
 	[SerializeField] private bool createTestBoard, board1, board2;
 	private bool boardStateDeclared;
+	private int[] blockingGrid;
+	private int[,] scoreBoard;
 	
 	private void Awake()
 	{
@@ -60,6 +62,8 @@ public class TicTacToeAI_ : MonoBehaviour
     private void Start() {
 		turn = 1;
 		_isPlayerTurn = true;
+		blockingGrid = new int[2] { -1,-1};
+		scoreBoard = new int[3,3] { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 
 
 		//initialize boardState
@@ -126,12 +130,33 @@ public class TicTacToeAI_ : MonoBehaviour
 
 		if(!_isPlayerTurn && !aiFinished) {
 			Debug.Log("AI's Turn");
+
+			//check board for potential winning move & block
+			//if isWinningMove (true or false), get empty grid and AiSelects(emptyGridX, emptyGridY)
+			int winningRow;
+			int winningCol;
+			bool hasWinningMove = CheckIfWinningMove(scoreBoard, out winningRow, out winningCol);
+			
+
+			if(hasWinningMove) {
+				Debug.Log("Winning Move Detected");
+				AiSelects(winningRow, winningCol);
+            } else {
+				//else, use FindNextMove and MyMiniMaxMethod to determine next move
+
+				ai_moveGrid = FindNextMove(boardState);
+				//Debug.Log("Next Move is:  X-" + ai_moveGrid[0] + "  Y-" + ai_moveGrid[1]);
+				//AiSelects(1, 1);
+				AiSelects(ai_moveGrid[0], ai_moveGrid[1]);
+			}
+
+			/*//else, use FindNextMove and MyMiniMaxMethod to determine next move
+
 			ai_moveGrid = FindNextMove(boardState);
 			//Debug.Log("Next Move is:  X-" + ai_moveGrid[0] + "  Y-" + ai_moveGrid[1]);
 			//AiSelects(1, 1);
-			AiSelects(ai_moveGrid[0], ai_moveGrid[1]);
+			AiSelects(ai_moveGrid[0], ai_moveGrid[1]);*/
         }
-		
 
 	}
 
@@ -155,7 +180,9 @@ public class TicTacToeAI_ : MonoBehaviour
 			SetVisual(coordX, coordY, playerState);
 			boardState[coordX, coordY] = TicTacToeState.circle;
 			boardRep[coordX, coordY] = " o";
+			scoreBoard[coordX, coordY] = -1;
 			PrintBoard(boardRep);
+			PrintScoreBoard(scoreBoard);
 
 			//send false and AIDelay( ) sets _isPlayerTurn to false after 1.5 second delay
 			StartCoroutine(AIDelay(false));
@@ -175,7 +202,10 @@ public class TicTacToeAI_ : MonoBehaviour
 			SetVisual(coordX, coordY, aiState);
 			boardState[coordX, coordY] = TicTacToeState.cross;
 			boardRep[coordX, coordY] = " x";
+			scoreBoard[coordX, coordY] = 1;
+
 			PrintBoard(boardRep);
+			PrintScoreBoard(scoreBoard);
 
 			//send true and AIDelay( ) sets _isPlayerTurn to true after 1.5 second delay
 			StartCoroutine(AIDelay(true));
@@ -184,6 +214,99 @@ public class TicTacToeAI_ : MonoBehaviour
 		}
 
 	}
+
+	private bool CheckIfWinningMove(int[,] board, out int winningRow, out int winningCol) {
+
+		//check rows to see if player has 2 pieces and an open slot
+		//return true if this is the case and store empty grid to winningRow and winningCol array variable
+		for(int row=0; row<_gridSize; row++) {
+			int sumRow = 0;
+			int emptyCol = -1;
+
+			for(int col=0; col<_gridSize; col++) {
+				sumRow += board[row, col];
+
+				if(board[row,col] == 0) {
+					emptyCol = col;
+                }
+            }
+
+			if(sumRow == -2 && emptyCol !=-1) {
+				winningRow = row;
+				winningCol = emptyCol;
+				return true;
+				Debug.Log("Row Sum = 2");
+            }
+        }
+
+		//check cols to see if player has 2 pieces and an open slot
+		//return true if this is the case and store empty grid to winningRow and winningCol array variable
+		for (int col = 0; col < _gridSize; col++) {
+			int sumCol = 0;
+			int emptyRow = -1;
+
+			for (int row = 0; row < _gridSize; row++) {
+				sumCol += board[row, col];
+
+				if (board[row, col] == 0) {
+					emptyRow = row;
+				}
+			}
+
+			if (sumCol == -2 && emptyRow != -1) {
+				winningRow = emptyRow;
+				winningCol = col;
+				return true;
+			}
+		}
+
+		//Check main diagonal (top left to bottom right) to see if player has 2 pieces and an open slot
+		//return true if this is the case and store empty grid to emptyRowDiagonal1 and emptyColDiagonal1 array
+		int sumDiag1 = 0;
+		int emptyRowDiagonal1 = -1, emptyColDiagonal1 = -1;
+
+		for(int i=0; i<_gridSize; i++) {
+			sumDiag1 += board[i,i];
+
+			if(board[i,i] == 0) {
+				emptyRowDiagonal1 = i;
+				emptyColDiagonal1 = i;
+            }
+        }
+
+		if(sumDiag1 == -2 && emptyRowDiagonal1 != -1) {
+			winningRow = emptyRowDiagonal1;
+			winningCol = emptyColDiagonal1;
+			return true;
+        }
+
+		//Check anti-diagonal (top right to bottom left) to see if player has 2 pieces and an open slot
+		//return true if this is the case and store empty grid to emptyRowDiagonal2 and emptyColDiagonal2 array
+		int sumDiag2 = 0;
+		int emptyRowDiagonal2 = -1, emptyColDiagonal2 = -1;
+
+		for (int i = 0; i < _gridSize; i++) {
+			sumDiag2 += board[i, 2-i];
+
+			if (board[i, 2-i] == 0) {
+				emptyRowDiagonal2 = i;
+				emptyColDiagonal2 = 2-i;
+			}
+		}
+
+		if (sumDiag2 == -2 && emptyRowDiagonal2 != -1) {
+			winningRow = emptyRowDiagonal2;
+			winningCol = emptyColDiagonal2;
+			return true;
+		}
+
+		//if not winning move found
+		winningRow = -1;
+		winningCol = -1;
+		return false;
+    }
+
+	
 
 	private int[] FindNextMove(TicTacToeState[,] board) {
 		int bestVal = int.MinValue;
@@ -340,5 +463,25 @@ public class TicTacToeAI_ : MonoBehaviour
         }
 		Debug.Log(boardString);
     }
+
+	void PrintScoreBoard(int[,] board) {
+		string boardString = "";
+
+		for (int row = 0; row < 3; row++) {
+			for (int col = 0; col < 3; col++) {
+
+				boardString += board[row, col].ToString();
+				if (col < 2) {
+					boardString += " | ";
+				}
+			}
+			boardString += "\n";
+
+			if (row < 2) {
+				//boardString += "---+---+---\n";
+			}
+		}
+		Debug.Log(boardString);
+	}
 
 }
