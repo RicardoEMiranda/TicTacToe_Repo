@@ -43,10 +43,12 @@ public class TicTacToeAI_ : MonoBehaviour
 
 	//My Variables
 	private string[,] boardRep;
+	private int[] ai_moveGrid;
 	private int turn;
 	private bool aiFinished;
 
-	[SerializeField] int aiX1, aiY1, aiX2, aiY2, aiX3, aiY3, aiX4, aiY4;
+	[SerializeField] private bool createTestBoard, board1, board2;
+	private bool boardStateDeclared;
 	
 	private void Awake()
 	{
@@ -58,14 +60,6 @@ public class TicTacToeAI_ : MonoBehaviour
     private void Start() {
 		turn = 1;
 		_isPlayerTurn = true;
-		aiX1 = 0;
-		aiY1 = 0;
-		aiX2 = 1;
-		aiY2 = 1;
-		aiX3 = 2;
-		aiY3 = 2;
-		aiX4 = 2;
-		aiY4 = 1;
 
 
 		//initialize boardState
@@ -78,7 +72,35 @@ public class TicTacToeAI_ : MonoBehaviour
             }
         }
 		PrintBoard(boardRep);
-    }
+
+		/*if(createTestBoard && board1) {
+			boardState[0, 0] = TicTacToeState.cross;
+			boardState[0, 1] = TicTacToeState.circle;
+			boardState[0, 2] = TicTacToeState.none;
+
+			boardState[1, 0] = TicTacToeState.circle;
+			boardState[1, 1] = TicTacToeState.cross;
+			boardState[1, 2] = TicTacToeState.none;
+
+			boardState[2, 0] = TicTacToeState.none;
+			boardState[2, 1] = TicTacToeState.none;
+			boardState[2, 2] = TicTacToeState.circle;
+		}
+
+		if (createTestBoard && board2) {
+			boardState[0, 0] = TicTacToeState.cross;
+			boardState[0, 1] = TicTacToeState.circle;
+			boardState[0, 2] = TicTacToeState.cross;
+
+			boardState[1, 0] = TicTacToeState.cross;
+			boardState[1, 1] = TicTacToeState.circle;
+			boardState[1, 2] = TicTacToeState.circle;
+
+			boardState[2, 0] = TicTacToeState.circle;
+			boardState[2, 1] = TicTacToeState.cross;
+			boardState[2, 2] = TicTacToeState.circle;
+		}*/
+	}
 
     public void StartAI(int AILevel){
 		_aiLevel = AILevel;
@@ -87,27 +109,29 @@ public class TicTacToeAI_ : MonoBehaviour
 
 	void Update() {
 
-		if (!_isPlayerTurn && !aiFinished) {
-			if (turn == 2) {
-				Debug.Log("Turn: " + turn);
-				AiSelects(aiX1, aiY1);
-			}
+		/*if(createTestBoard && !boardStateDeclared) {
+			bool boardFull = CheckBoardIsFull(boardState);
 
-			if (turn == 4 && !aiFinished) {
-				Debug.Log("Turn: " + turn);
-				AiSelects(aiX2, aiY2);
-			}
+			if(boardFull) {
+				Debug.Log("Board is full");
 
-			if (turn == 6 && !aiFinished) {
-				Debug.Log("Turn: " + turn);
-				AiSelects(aiX3, aiY3);
-			}
+			} else if(!boardFull) {
+				Debug.Log("Board is not full");
 
-			if (turn == 8 && !aiFinished) {
-				Debug.Log("Turn: " + turn);
-				AiSelects(aiX4, aiY4);
-			}
-		}
+			} else {
+				Debug.Log("Check Board Full method for exception.");
+            }
+			boardStateDeclared = true;
+        }*/
+
+		if(!_isPlayerTurn && !aiFinished) {
+			Debug.Log("AI's Turn");
+			ai_moveGrid = FindNextMove(boardState);
+			//Debug.Log("Next Move is:  X-" + ai_moveGrid[0] + "  Y-" + ai_moveGrid[1]);
+			//AiSelects(1, 1);
+			AiSelects(ai_moveGrid[0], ai_moveGrid[1]);
+        }
+		
 
 	}
 
@@ -125,31 +149,162 @@ public class TicTacToeAI_ : MonoBehaviour
 
     public void PlayerSelects(int coordX, int coordY){
 
-		SetVisual(coordX, coordY, playerState);
-		boardState[coordX, coordY] = TicTacToeState.circle;
-		boardRep[coordX, coordY] = " o";
-		PrintBoard(boardRep);
+		//check that grid state is none (blank) before allowing player to select
+		//this will prevent the player form placing more than one cirlce in a chosen grid
+		if(boardState[coordX,coordY] == TicTacToeState.none) {
+			SetVisual(coordX, coordY, playerState);
+			boardState[coordX, coordY] = TicTacToeState.circle;
+			boardRep[coordX, coordY] = " o";
+			PrintBoard(boardRep);
 
-		//send false and AIDelay( ) sets _isPlayerTurn to false after 1.5 second delay
-		StartCoroutine(AIDelay(false));
-		//_isPlayerTurn = false;
-		//turn += 1;
-		
+			//send false and AIDelay( ) sets _isPlayerTurn to false after 1.5 second delay
+			StartCoroutine(AIDelay(false));
+			//_isPlayerTurn = false;
+			//turn += 1;
+		}
+
+
 	}
 
 	public void AiSelects(int coordX, int coordY){
 
-		SetVisual(coordX, coordY, aiState);
-		boardState[coordX, coordY] = TicTacToeState.cross;
-		boardRep[coordX, coordY] = " x";
-		PrintBoard(boardRep);
+		//check that grid state is none (blank) before allowing player to select
+		//this will prevent the player form placing more than one cirlce in a chosen grid
+		if (boardState[coordX, coordY] == TicTacToeState.none) {
+			Debug.Log("Ai Selects X: " + coordX + "  Y: " + coordY);
+			SetVisual(coordX, coordY, aiState);
+			boardState[coordX, coordY] = TicTacToeState.cross;
+			boardRep[coordX, coordY] = " x";
+			PrintBoard(boardRep);
 
-		//send true and AIDelay( ) sets _isPlayerTurn to true after 1.5 second delay
-		StartCoroutine(AIDelay(true));
-		//_isPlayerTurn = true;
-		//turn += 1;
+			//send true and AIDelay( ) sets _isPlayerTurn to true after 1.5 second delay
+			StartCoroutine(AIDelay(true));
+			//_isPlayerTurn = true;
+			//turn += 1;
+		}
 
 	}
+
+	private int[] FindNextMove(TicTacToeState[,] board) {
+		int bestVal = int.MinValue;
+		int[] bestMove = { -1, -1 };
+
+		for(int row=0; row<_gridSize; row++) {
+			for(int col=0; col<_gridSize; col++) {
+
+				//evaluate value of moving X to this current empty slot
+				if(board[row,col] == TicTacToeState.none) {
+					board[row, col] = TicTacToeState.cross;
+					int moveValue = MyMiniMaxMethod(board, 0, true);
+					Debug.Log("Move Value: " + moveValue);
+					board[row, col] = TicTacToeState.none;
+
+					if(moveValue>bestVal) {
+						bestMove[0] = row;
+						bestMove[1] = col;
+						bestVal = moveValue;
+                    }
+                }
+            }
+        }
+		Debug.Log(" Line 209, X: " + bestMove[0] + "  Y" + bestMove[1]);
+		return bestMove;
+    }
+
+	private int MyMiniMaxMethod(TicTacToeState[,] board, int depth, bool isMaximizing) {
+		int score = EvaluateBoard(board);
+
+		if(score ==10) {
+			return score;
+        }
+
+		if(isMaximizing) {
+			int best = int.MinValue;
+
+			for (int row = 0; row < _gridSize; row++) {
+				for (int col = 0; col < _gridSize; col++) {
+					if (board[row, col] == TicTacToeState.none) {
+						board[row, col] = TicTacToeState.cross;
+						int value = MyMiniMaxMethod(board, depth + 1, true);
+						best = Mathf.Max(best, value);
+						board[row, col] = TicTacToeState.none;
+					}
+				}
+			}
+			return best - depth;
+		} else {
+			int best = int.MaxValue;
+			for (int row = 0; row < _gridSize; row++) {
+				for (int col = 0; col < _gridSize; col++) {
+					if (board[row, col] == TicTacToeState.none) {
+						board[row, col] = TicTacToeState.cross;
+						int value = MyMiniMaxMethod(board, depth + 1, false);
+						best = Mathf.Max(best, value);
+						board[row, col] = TicTacToeState.none;
+					}
+				}
+			}
+			return best + depth;
+		}
+		
+    }
+
+	private int EvaluateBoard(TicTacToeState[,] board) {
+		//will take the depth+1 board state passed from MiniMax function
+		//and return +10 if AI wins with the prospective move,
+		//-10 if the player wins with the prospective move or 
+		//0 if no one wins.
+
+		for (int row = 0; row < _gridSize; row++) {
+			if(board[row,0] == board[row,1] && board[row,1] == board[row,2]) {
+				if(board[row, 0] == TicTacToeState.cross) {
+					return +10;
+                } else if(board[row,0] == TicTacToeState.circle) {
+					return -10;
+                } 
+            }	
+        }
+
+		for(int col=0; col<_gridSize; col++) {
+			if(board[0,col] == board[1,col] && board[1,col] == board[2, col]) {
+				if(board[0,col] == TicTacToeState.cross) {
+					return 10;
+                } else if(board[0,col] == TicTacToeState.circle) {
+					return 10;
+                }
+            }
+        }
+
+		if(board[2,0] == board[1,1] && board[1,1] == board[0,2]) {
+			if(board[2,0] == TicTacToeState.cross) {
+				return 10;
+            } else if(board[2,0] == TicTacToeState.circle) {
+				return -10;
+            }
+        }
+
+		if (board[0, 0] == board[1, 1] && board[1, 1] == board[2, 0]) {
+			if (board[0, 0] == TicTacToeState.cross) {
+				return 10;
+			} else if (board[0, 0] == TicTacToeState.circle) {
+				return -10;
+			}
+		}
+
+		//if neither AI or player have a row, return 0 for neutral move
+		return 0;
+    }
+
+	private bool CheckBoardIsFull(TicTacToeState[,] board) {
+		for(int row=0; row<_gridSize; row++) {
+			for(int col=0; col<_gridSize; col++) {
+				if(board[row,col] == TicTacToeState.none) {
+					return false;
+                }
+            }
+        }
+		return true;
+    }
 
 	private void SetVisual(int coordX, int coordY, TicTacToeState targetState)
 	{

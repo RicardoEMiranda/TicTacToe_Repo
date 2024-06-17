@@ -2702,14 +2702,9 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-  aiX1: 0
-  aiY1: 0
-  aiX2: 0
-  aiY2: 0
-  aiX3: 0
-  aiY3: 0
-  aiX4: 0
-  aiY4: 0
+  createTestBoard: 0
+  board1: 0
+  board2: 0
 --- !u!4 &2053529901
 Transform:
   m_ObjectHideFlags: 0
