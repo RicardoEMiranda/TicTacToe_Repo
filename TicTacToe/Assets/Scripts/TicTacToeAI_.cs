@@ -91,12 +91,12 @@ public class TicTacToeAI_ : MonoBehaviour
 
 	void Update() {
 
-		if(!_isPlayerTurn && !aiFinished && !gameOver) {
+		if (!_isPlayerTurn && !aiFinished && !gameOver) {
 			//Debug.Log("AI's Turn");
 
 			//Opening Move for AI
 			//Player moves on odd turns (turn =1, 3, 5, 7 9). AI moves on even turns (turn=2,4,6,8)
-			if(turn==2 && !_isPlayerTurn && !aiFinished) {
+			/*if(turn==2 && !_isPlayerTurn && !aiFinished) {
 				if (scoreBoard[1, 1] == -1) {
 					int[] keyGrids = new int[2] { 0, 2 };
 					int keyRow = keyGrids[UnityEngine.Random.Range(0, 2)];
@@ -105,13 +105,13 @@ public class TicTacToeAI_ : MonoBehaviour
 				} else {
 					AiSelects(1, 1);
                 }
-            }
+            }*/
 
 
 			//check board for potential winning move & block
 			//if isWinningMove (true or false), get empty grid and AiSelects(emptyGridX, emptyGridY)
-			
-			if (turn>=4) {
+
+			/*if (turn>=4) {
 				int winningRow;
 				int winningCol;
 				bool hasWinningMove = CheckIfWinningMove(scoreBoard, out winningRow, out winningCol);
@@ -128,10 +128,25 @@ public class TicTacToeAI_ : MonoBehaviour
 					//AiSelects(1, 1);
 					AiSelects(ai_moveGrid[0], ai_moveGrid[1]);
 				}
-			}
-			
+			}*/
 
-        }
+			int winningRow;
+			int winningCol;
+			bool hasWinningMove = CheckIfWinningMove(scoreBoard, out winningRow, out winningCol);
+			if (hasWinningMove && !gameOver) {
+				Debug.Log("Winning Move Detected");
+				Debug.Log("Winnng Row: " + winningRow + "  Winning Column: " + winningCol);
+				AiSelects(winningRow, winningCol);
+				//hasWinningMove = false;
+			} else if(!hasWinningMove && !gameOver) {
+				//else, use FindNextMove and MyMiniMaxMethod to determine next move
+
+				ai_moveGrid = FindNextMove(boardState);
+				//Debug.Log("Next Move is:  X-" + ai_moveGrid[0] + "  Y-" + ai_moveGrid[1]);
+				//AiSelects(1, 1);
+				AiSelects(ai_moveGrid[0], ai_moveGrid[1]);
+			}
+		}
 
 		gameOver = CheckIfGameOver(scoreBoard, out winner);
 		if (gameOver) {
