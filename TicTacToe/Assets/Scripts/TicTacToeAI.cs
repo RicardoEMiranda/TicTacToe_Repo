@@ -43,6 +43,7 @@ public class TicTacToeAI : MonoBehaviour {
 	//MyVariables
 	int[,] testBoard;
 	bool aiMoveToWin;
+	bool aiMoveToBlock;
 	int turn = 0;
 	int[] winningGrid = new int[2] { -1, -1 };
 	private bool gameOver;
@@ -89,35 +90,107 @@ public class TicTacToeAI : MonoBehaviour {
 
     private void Update() {
 		
-		aiMoveToWin = CheckIfNextStepWins(testBoard);
-
-		gameOver = CheckIfGameOver(testBoard, out winner);
+		aiMoveToWin = CheckStep(board, 2);
+		aiMoveToBlock = CheckStep(board, -2);
+		//Debug.Log("Move to win? : " + aiMoveToWin);
+		gameOver = CheckIfGameOver(board, out winner);
 
 		if(gameOver) {
 			Debug.Log("Game Over. Winner is: " + winner);
         }
 
-		if(aiMoveToWin & !gameOver) {
+		if(aiMoveToWin && !gameOver) {
 			//find row, col or diagonal and corresponding empty slot
-			winningGrid = GetWinningGrid(testBoard);
+			winningGrid = GetGrid(board, 2);
 			Debug.Log("Winning Grid is  X: " + winningGrid[0] + "  Y: " + winningGrid[1]);
 
 			//move AI into that empty slot
 			AiSelects(winningGrid[0], winningGrid[1]);
         }
 
-		
+		if(aiMoveToBlock && !aiMoveToWin && !gameOver) {
+			//Debug.Log("Ai should move to block");
+			winningGrid = GetGrid(board, -2);
+			AiSelects(winningGrid[0], winningGrid[1]);
+
+        }
+
+		if(!aiMoveToBlock && !aiMoveToWin && turn>=4 && !gameOver) {
+			//use a MiniMax algorithm
+			int[] bestMove = GetBestMove();
+
+			if(bestMove != null) {
+				AiSelects(bestMove[0], bestMove[1]);
+            }
+        }
 
 		if(turn ==2) {
 			int[] openingMoveCoordinates = MakeOpeningMove(board);
 			AiSelects(openingMoveCoordinates[0], openingMoveCoordinates[1]);
         }
 
-		if(turn == 4) {
-			//AiSelects(1,1);
-        }
+		
 		
     }
+
+	private int[] GetBestMove() {
+		int bestScore = -1000;
+		int[] bestMove = null;
+
+		for(int i=0; i<_gridSize; i++) {
+			for(int j=0; j<_gridSize; j++) {
+				if(board[i,j] ==0) {
+					board[i, j] = 1;
+					int score = MyMiniMax(board, 0, false);
+					board[i, j] = 0;
+
+					if(score>bestScore) {
+						bestScore = score;
+						bestMove = new int[] { i, j };
+                    }
+                }
+            }
+        }
+
+		return bestMove;
+    }
+
+	private int MyMiniMax(int[,] board, int depth, bool isMaximizing) {
+		if(isMaximizing) {
+
+			int bestScore = -1000;
+			for(int i=0; i<_gridSize; i++) {
+				for(int j=0; j<_gridSize; j++) {
+					if(board[i,j] ==0) {
+						board[i, j] = 1;
+						int score = MyMiniMax(board, depth + 1, false);
+						board[i, j] = 0;
+						bestScore = Mathf.Max(score, bestScore);
+                    }
+                }
+            }
+
+			return bestScore;
+
+        } else {
+
+			int bestScore = 1000;
+			for (int i = 0; i < _gridSize; i++) {
+				for (int j = 0; j < _gridSize; j++) {
+					if (board[i, j] == 0) {
+						board[i, j] = -1;
+						int score = MyMiniMax(board, depth + 1, true);
+						board[i, j] = 0;
+						bestScore = Mathf.Max(score, bestScore);
+					}
+				}
+			}
+
+			return bestScore;
+
+		}
+    }
+
 
 	private int[] MakeOpeningMove(int[,] board) {
 		int[] openingMoveCoordinates = new int[2] { -1, -1 };
@@ -198,7 +271,7 @@ public class TicTacToeAI : MonoBehaviour {
 		return false;
     }
 
-	private int[] GetWinningGrid(int[,] board) {
+	private int[] GetGrid(int[,] board, int valueDeterminant) {
 		int[] winningGrid = new int[2] { -1, -1 };
 
 		//check rows, set winningGrid to [row, col]
@@ -206,7 +279,9 @@ public class TicTacToeAI : MonoBehaviour {
 			int sumRow = 0;
 			for(int col=0; col<_gridSize; col++) {
 				sumRow += board[row, col];
-				if (sumRow == 2) {
+				if (sumRow == valueDeterminant) {
+					//if pass in 2 for valueDeterminant, will be true 
+					//when sumRow == 2
 					int keyRow = row;
 					for(int i=0; i<_gridSize; i++) {
 						if(board[keyRow, i] == 0) {
@@ -224,7 +299,7 @@ public class TicTacToeAI : MonoBehaviour {
 			for (int row = 0; row < _gridSize; row++) {
 				sumCol += board[row, col];
 				//Debug.Log("Sum Column: " + sumCol);
-				if (sumCol == 2) {
+				if (sumCol == valueDeterminant) {
 					int keyCol = col;
 					//Debug.Log("Key Column: " + keyCol);
 					for(int i=0; i<_gridSize; i++) {
@@ -242,7 +317,7 @@ public class TicTacToeAI : MonoBehaviour {
 		for(int i =0; i<_gridSize; i++) {
 			sumDiag1 += board[i, i];
         }
-		if (sumDiag1 == 2) {
+		if (sumDiag1 == valueDeterminant) {
 			for (int j = 0; j < _gridSize; j++) {
 				if (board[j, j] == 0) {
 					winningGrid = new int[2] { j, j };
@@ -254,7 +329,7 @@ public class TicTacToeAI : MonoBehaviour {
 		for(int i=0; i<_gridSize; i++) {
 			sumDiag2 += board[2 - i, i];
         }
-		if(sumDiag2==2) {
+		if(sumDiag2== valueDeterminant) {
 			for(int j=0; j<_gridSize; j++) {
 				if(board[2-j,j] == 0) {
 					winningGrid = new int[2] { 2 - j, j };
@@ -265,7 +340,7 @@ public class TicTacToeAI : MonoBehaviour {
 		return winningGrid;
     }
 
-    private bool CheckIfNextStepWins(int[,] board) {
+    private bool CheckStep(int[,] board, int determinant) {
 
 		//sum each row
 		int sumRow1 = board[0,0] + board[0,1] + board[0,2];
@@ -282,20 +357,20 @@ public class TicTacToeAI : MonoBehaviour {
 		int sumDiag2 = board[0, 0] + board[1, 1] + board[2, 2];
 
 		//check if rows sum to 2
-		if (sumRow1 == 2 || sumRow2 == 2 || sumRow3 == 2) {
-			Debug.Log("Sum of Row is 2, AI should move to win");
+		if (sumRow1 == determinant || sumRow2 == determinant || sumRow3 == determinant) {
+			//Debug.Log("Sum of Row is 2, AI should move to win");
 			return true;
         }
 
 		//check if columns sum to 2
-		if (sumCol1 == 2 || sumCol2 == 2 || sumCol3 == 2) {
-			Debug.Log("Sum of Col is 2, AI should move to win");
+		if (sumCol1 == determinant || sumCol2 == determinant || sumCol3 == determinant) {
+			//Debug.Log("Sum of Col is 2, AI should move to win");
 			return true;
 		}
 
 		//check if diagonals sum to 2
-		if(sumDiag1 == 2 || sumDiag2 == 2) {
-			Debug.Log("Sum of Diag is 2, AI should move to win");
+		if(sumDiag1 == determinant || sumDiag2 == determinant) {
+			//Debug.Log("Sum of Diag is 2, AI should move to win");
 			return true;
         }
 
