@@ -24,7 +24,4 @@ public class TestSettings : MonoBehaviour {
 
     }
 
-    //public void OnResetClick() {
-    //   ticTacToeAI.StartAI(0);
-    //}
 }

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 public enum TicTacToeState{none, cross, circle}
 
@@ -50,6 +51,9 @@ public class TicTacToeAI : MonoBehaviour {
 	private TicTacToeState winner;
 	private int[] openingMoveGrid;
 	private int[,] board;
+	
+
+	[SerializeField] private Text winLoseDrawText;
 
 	[SerializeField] private GameObject gamePanel;
 	
@@ -67,7 +71,9 @@ public class TicTacToeAI : MonoBehaviour {
 		_isPlayerTurn = true;
 		openingMoveGrid = new int[2] { -1, -1 };
 		board = new int[3, 3] { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
-    }
+		winLoseDrawText.text = "";
+
+	}
 
     public void StartAI(int AILevel){
 		_aiLevel = AILevel;
@@ -84,8 +90,9 @@ public class TicTacToeAI : MonoBehaviour {
 		_triggers = new ClickTrigger[3,3];
 		onGameStarted.Invoke();
 
+
 		//////////TAKE OUT//////////
-		gamePanel.SetActive(true);
+		//gamePanel.SetActive(true);
 	}
 
     private void Update() {
@@ -95,9 +102,24 @@ public class TicTacToeAI : MonoBehaviour {
 		//Debug.Log("Move to win? : " + aiMoveToWin);
 		gameOver = CheckIfGameOver(board, out winner);
 
-		if(gameOver) {
-			Debug.Log("Game Over. Winner is: " + winner);
-        }
+		if (turn == 2) {
+			int[] openingMoveCoordinates = MakeOpeningMove(board);
+			
+			AiSelects(openingMoveCoordinates[0], openingMoveCoordinates[1]);
+		}
+
+		if (gameOver) {
+			//Debug.Log("Game Over. Winner is: " + winner);
+			if(winner == TicTacToeState.circle) {
+				winLoseDrawText.text = "YOU WIN!\n Click RETRY to play again";
+			} else if(winner == TicTacToeState.cross) {
+				winLoseDrawText.text = "AI WINS!\n Click RETRY to try again";
+			} 
+			gamePanel.SetActive(true);
+		} else if(!gameOver && turn==10) {
+			winLoseDrawText.text = "TIE!\n Click RETRY to try again";
+			gamePanel.SetActive(true);
+		}
 
 		if(aiMoveToWin && !gameOver) {
 			//find row, col or diagonal and corresponding empty slot
@@ -105,12 +127,14 @@ public class TicTacToeAI : MonoBehaviour {
 			Debug.Log("Winning Grid is  X: " + winningGrid[0] + "  Y: " + winningGrid[1]);
 
 			//move AI into that empty slot
+			
 			AiSelects(winningGrid[0], winningGrid[1]);
         }
 
 		if(aiMoveToBlock && !aiMoveToWin && !gameOver) {
 			//Debug.Log("Ai should move to block");
 			winningGrid = GetGrid(board, -2);
+			
 			AiSelects(winningGrid[0], winningGrid[1]);
 
         }
@@ -120,19 +144,13 @@ public class TicTacToeAI : MonoBehaviour {
 			int[] bestMove = GetBestMove();
 
 			if(bestMove != null) {
+				
 				AiSelects(bestMove[0], bestMove[1]);
             }
         }
 
-		if(turn ==2) {
-			int[] openingMoveCoordinates = MakeOpeningMove(board);
-			AiSelects(openingMoveCoordinates[0], openingMoveCoordinates[1]);
-        }
-
-		
-		
     }
-
+		
 	private int[] GetBestMove() {
 		int bestScore = -1000;
 		int[] bestMove = null;
@@ -266,7 +284,6 @@ public class TicTacToeAI : MonoBehaviour {
 			return true;
         }
 
-
 		winner = TicTacToeState.none;
 		return false;
     }
@@ -383,7 +400,7 @@ public class TicTacToeAI : MonoBehaviour {
 			turn += 1;
 			SetVisual(coordX, coordY, playerState);
 			board[coordX, coordY] = -1;
-			//testBoard[coordX, coordY] = -1;
+
 			_isPlayerTurn = false;
 		}
 		
@@ -391,11 +408,11 @@ public class TicTacToeAI : MonoBehaviour {
 
 	public void AiSelects(int coordX, int coordY){
 
-		if(!_isPlayerTurn) {
+		if(!_isPlayerTurn) { 
 			turn += 1;
 			SetVisual(coordX, coordY, aiState);
 			board[coordX, coordY] = 1;
-			//testBoard[coordX, coordY] = 1;
+
 			_isPlayerTurn = true;
 		}
 		
