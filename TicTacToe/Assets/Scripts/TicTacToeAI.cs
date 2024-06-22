@@ -51,11 +51,28 @@ public class TicTacToeAI : MonoBehaviour {
 	private TicTacToeState winner;
 	private int[] openingMoveGrid;
 	private int[,] board;
-	
+	private float delay;
+	private float startTime;
+	[SerializeField] private bool playerIsWaiting;
+	[SerializeField] private GameObject go_audioSource;
+	[SerializeField] private GameObject go_audioSourceGameLoop;
+	[SerializeField] private GameObject go_audioSourceWaiting;
+	private AudioSource audioSourceSFX;
+	private AudioSource audioSourceGameLoop;
+	//private AudioSource audioSourceWaiting;
+
+	[SerializeField] private AudioClip buttonClick;
+	[SerializeField] private AudioClip audioGameLoop;
+	[SerializeField] private AudioClip waiting;
+	[SerializeField] private AudioClip click;
+	[SerializeField] private AudioClip win;
+	[SerializeField] private AudioClip lose;
 
 	[SerializeField] private Text winLoseDrawText;
 
 	[SerializeField] private GameObject gamePanel;
+	private bool hasPlayedWaitingSound;
+	private bool hasPlayedGameOver;
 	
 	private void Awake()
 	{
@@ -72,12 +89,26 @@ public class TicTacToeAI : MonoBehaviour {
 		openingMoveGrid = new int[2] { -1, -1 };
 		board = new int[3, 3] { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 		winLoseDrawText.text = "";
-
+		delay = 1.5f;
+		playerIsWaiting = false;
+		audioSourceSFX = go_audioSource.GetComponent<AudioSource>();
+		audioSourceGameLoop = go_audioSourceGameLoop.GetComponent<AudioSource>();
+		//audioSourceWaiting = go_audioSourceWaiting.GetComponent<audioSourceWaiting>();
+		hasPlayedWaitingSound = false;
 	}
 
     public void StartAI(int AILevel){
 		_aiLevel = AILevel;
 		StartGame();
+
+
+
+		//play button click
+		audioSourceGameLoop.clip = audioGameLoop;
+		audioSourceGameLoop.Play();
+
+		audioSourceSFX.clip = buttonClick;
+		audioSourceSFX.Play();
 	}
 
 	public void RegisterTransform(int myCoordX, int myCoordY, ClickTrigger clickTrigger)
@@ -90,66 +121,93 @@ public class TicTacToeAI : MonoBehaviour {
 		_triggers = new ClickTrigger[3,3];
 		onGameStarted.Invoke();
 
-
-		//////////TAKE OUT//////////
-		//gamePanel.SetActive(true);
 	}
 
     private void Update() {
-		
-		aiMoveToWin = CheckStep(board, 2);
-		aiMoveToBlock = CheckStep(board, -2);
-		//Debug.Log("Move to win? : " + aiMoveToWin);
+
 		gameOver = CheckIfGameOver(board, out winner);
+		if (!_isPlayerTurn && playerIsWaiting) {
+			aiMoveToWin = CheckStep(board, 2);
+			aiMoveToBlock = CheckStep(board, -2);
+			//Debug.Log("Move to win? : " + aiMoveToWin);
+			//gameOver = CheckIfGameOver(board, out winner);
 
-		if (turn == 2) {
-			int[] openingMoveCoordinates = MakeOpeningMove(board);
-			
-			AiSelects(openingMoveCoordinates[0], openingMoveCoordinates[1]);
-		}
+			if (turn == 2) {
+				int[] openingMoveCoordinates = MakeOpeningMove(board);
+				StartCoroutine(AIDelay(openingMoveCoordinates[0], openingMoveCoordinates[1]));
 
-		if (gameOver) {
-			//Debug.Log("Game Over. Winner is: " + winner);
-			if(winner == TicTacToeState.circle) {
-				winLoseDrawText.text = "YOU WIN!\n Click RETRY to play again";
-			} else if(winner == TicTacToeState.cross) {
-				winLoseDrawText.text = "AI WINS!\n Click RETRY to try again";
-			} 
-			gamePanel.SetActive(true);
-		} else if(!gameOver && turn==10) {
-			winLoseDrawText.text = "TIE!\n Click RETRY to try again";
-			gamePanel.SetActive(true);
-		}
+				//AiSelects(openingMoveCoordinates[0], openingMoveCoordinates[1]);
+			}
 
-		if(aiMoveToWin && !gameOver) {
-			//find row, col or diagonal and corresponding empty slot
-			winningGrid = GetGrid(board, 2);
-			Debug.Log("Winning Grid is  X: " + winningGrid[0] + "  Y: " + winningGrid[1]);
+			if (gameOver) {
+				Debug.Log("Game Over. Winner is: " + winner);
+				playerIsWaiting = true;
+				_isPlayerTurn = false;
+				if (winner == TicTacToeState.circle) {
+					winLoseDrawText.text = "YOU WIN!\n Click RETRY to play again";
 
-			//move AI into that empty slot
-			
-			AiSelects(winningGrid[0], winningGrid[1]);
-        }
+					if(!hasPlayedGameOver) {
+						audioSourceSFX.clip = win;
+						audioSourceSFX.Play();
+						hasPlayedGameOver = true;
+					}
+					
+				} else if (winner == TicTacToeState.cross) {
+					winLoseDrawText.text = "AI WINS!\n Click RETRY to try again";
 
-		if(aiMoveToBlock && !aiMoveToWin && !gameOver) {
-			//Debug.Log("Ai should move to block");
-			winningGrid = GetGrid(board, -2);
-			
-			AiSelects(winningGrid[0], winningGrid[1]);
+					if (!hasPlayedGameOver) {
+						audioSourceSFX.clip = lose;
+						audioSourceSFX.Play();
+						hasPlayedGameOver = true;
+					}
+					audioSourceSFX.clip = lose;
+					audioSourceSFX.Play();
+				}
+				gamePanel.SetActive(true);
+			} else if (!gameOver && turn == 10) {
+				winLoseDrawText.text = "TIE!\n Click RETRY to try again";
+				gamePanel.SetActive(true);
+			}
 
-        }
-
-		if(!aiMoveToBlock && !aiMoveToWin && turn>=4 && !gameOver) {
-			//use a MiniMax algorithm
-			int[] bestMove = GetBestMove();
-
-			if(bestMove != null) {
+			if (aiMoveToWin && !gameOver) {
+				//find row, col or diagonal and corresponding empty slot
+				winningGrid = GetGrid(board, 2);
+				Debug.Log("Winning Grid is  X: " + winningGrid[0] + "  Y: " + winningGrid[1]);
 				
-				AiSelects(bestMove[0], bestMove[1]);
-            }
-        }
+				//move AI into that empty slot
+				StartCoroutine(AIDelay(winningGrid[0], winningGrid[1]));
+				//AiSelects(winningGrid[0], winningGrid[1]);
+			}
 
+			if (aiMoveToBlock && !aiMoveToWin && !gameOver) {
+				//Debug.Log("Ai should move to block");
+				winningGrid = GetGrid(board, -2);
+				StartCoroutine(AIDelay(winningGrid[0], winningGrid[1]));
+				//AiSelects(winningGrid[0], winningGrid[1]);
+
+			}
+
+			if (!aiMoveToBlock && !aiMoveToWin && turn >= 4 && !gameOver) {
+				//use a MiniMax algorithm
+				int[] bestMove = GetBestMove();
+
+				if (bestMove != null) {
+
+					StartCoroutine(AIDelay(bestMove[0], bestMove[1]));
+					//AiSelects(bestMove[0], bestMove[1]);
+				}
+			}
+		}
+		
     }
+
+	private IEnumerator AIDelay(int xCoord, int yCoord) {
+		go_audioSourceWaiting.SetActive(true);
+		yield return new WaitForSeconds(1.5f);
+
+		AiSelects(xCoord, yCoord);
+		go_audioSourceWaiting.SetActive(false);
+	}
 		
 	private int[] GetBestMove() {
 		int bestScore = -1000;
@@ -279,6 +337,7 @@ public class TicTacToeAI : MonoBehaviour {
 		if (sumDiag2 == 3) {
 			winner = TicTacToeState.cross;
 			return true;
+			Debug.Log("Winner is AI");
 		} else if(sumDiag2==-3) {
 			winner = TicTacToeState.circle;
 			return true;
@@ -396,26 +455,34 @@ public class TicTacToeAI : MonoBehaviour {
 
 	public void PlayerSelects(int coordX, int coordY){
 
-		if(_isPlayerTurn) {
+		if(_isPlayerTurn && !playerIsWaiting && board[coordX, coordY] != -1 && board[coordX, coordY] != 1) {
 			turn += 1;
 			SetVisual(coordX, coordY, playerState);
 			board[coordX, coordY] = -1;
 
+			audioSourceSFX.clip = click;
+			audioSourceSFX.Play();
+
 			_isPlayerTurn = false;
+			playerIsWaiting = true;
 		}
 		
 	}
 
 	public void AiSelects(int coordX, int coordY){
 
-		if(!_isPlayerTurn) { 
+		if(!_isPlayerTurn && playerIsWaiting && board[coordX, coordY] != -1 && board[coordX, coordY] != 1) { 
 			turn += 1;
 			SetVisual(coordX, coordY, aiState);
 			board[coordX, coordY] = 1;
 
+			audioSourceSFX.clip = click;
+			audioSourceSFX.Play();
+
 			_isPlayerTurn = true;
+			playerIsWaiting = false;
+			//delayFinished = true;
 		}
-		
 	}
 
 	private void SetVisual(int coordX, int coordY, TicTacToeState targetState)
