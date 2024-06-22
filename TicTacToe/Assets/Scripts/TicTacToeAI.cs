@@ -126,76 +126,76 @@ public class TicTacToeAI : MonoBehaviour {
     private void Update() {
 
 		gameOver = CheckIfGameOver(board, out winner);
-		if (!_isPlayerTurn && playerIsWaiting) {
-			aiMoveToWin = CheckStep(board, 2);
-			aiMoveToBlock = CheckStep(board, -2);
-			//Debug.Log("Move to win? : " + aiMoveToWin);
-			//gameOver = CheckIfGameOver(board, out winner);
+		aiMoveToWin = CheckStep(board, 2);
+		aiMoveToBlock = CheckStep(board, -2);
+		//Debug.Log("Move to win? : " + aiMoveToWin);
+		//gameOver = CheckIfGameOver(board, out winner);
 
-			if (turn == 2) {
-				int[] openingMoveCoordinates = MakeOpeningMove(board);
-				StartCoroutine(AIDelay(openingMoveCoordinates[0], openingMoveCoordinates[1]));
+		if (turn == 2) {
+			int[] openingMoveCoordinates = MakeOpeningMove(board);
+			StartCoroutine(AIDelay(openingMoveCoordinates[0], openingMoveCoordinates[1]));
+			//AiSelects(openingMoveCoordinates[0], openingMoveCoordinates[1]);
+		}
 
-				//AiSelects(openingMoveCoordinates[0], openingMoveCoordinates[1]);
-			}
+		if (gameOver) {
+			Debug.Log("Game Over. Winner is: " + winner);
+			//playerIsWaiting = true;
+			//_isPlayerTurn = false;
+			if (winner == TicTacToeState.circle) {
+				winLoseDrawText.text = "YOU WIN!\n Click RETRY to play again";
 
-			if (gameOver) {
-				Debug.Log("Game Over. Winner is: " + winner);
-				playerIsWaiting = true;
-				_isPlayerTurn = false;
-				if (winner == TicTacToeState.circle) {
-					winLoseDrawText.text = "YOU WIN!\n Click RETRY to play again";
-
-					if(!hasPlayedGameOver) {
-						audioSourceSFX.clip = win;
-						audioSourceSFX.Play();
-						hasPlayedGameOver = true;
-					}
+				if(!hasPlayedGameOver) {
+					audioSourceSFX.clip = win;
+					audioSourceSFX.Play();
+					hasPlayedGameOver = true;
+				}
 					
-				} else if (winner == TicTacToeState.cross) {
-					winLoseDrawText.text = "AI WINS!\n Click RETRY to try again";
+			} else if (winner == TicTacToeState.cross) {
+				winLoseDrawText.text = "AI WINS!\n Click RETRY to try again";
 
-					if (!hasPlayedGameOver) {
-						audioSourceSFX.clip = lose;
-						audioSourceSFX.Play();
-						hasPlayedGameOver = true;
-					}
+				if (!hasPlayedGameOver) {
 					audioSourceSFX.clip = lose;
 					audioSourceSFX.Play();
+					hasPlayedGameOver = true;
 				}
-				gamePanel.SetActive(true);
-			} else if (!gameOver && turn == 10) {
-				winLoseDrawText.text = "TIE!\n Click RETRY to try again";
-				gamePanel.SetActive(true);
+	
 			}
+			gamePanel.SetActive(true);
+		} else if (!gameOver && turn == 10) {
+			winLoseDrawText.text = "TIE!\n Click RETRY to try again";
+				if (!hasPlayedGameOver) {
+					audioSourceSFX.clip = lose;
+					audioSourceSFX.Play();
+					hasPlayedGameOver = true;
+				}
+			gamePanel.SetActive(true);
+		}
 
-			if (aiMoveToWin && !gameOver) {
-				//find row, col or diagonal and corresponding empty slot
-				winningGrid = GetGrid(board, 2);
-				Debug.Log("Winning Grid is  X: " + winningGrid[0] + "  Y: " + winningGrid[1]);
+		if (aiMoveToWin && !gameOver) {
+			//find row, col or diagonal and corresponding empty slot
+			winningGrid = GetGrid(board, 2);
+			//Debug.Log("Winning Grid is  X: " + winningGrid[0] + "  Y: " + winningGrid[1]);
 				
-				//move AI into that empty slot
-				StartCoroutine(AIDelay(winningGrid[0], winningGrid[1]));
-				//AiSelects(winningGrid[0], winningGrid[1]);
-			}
+			//move AI into that empty slot
+			StartCoroutine(AIDelay(winningGrid[0], winningGrid[1]));
+			//AiSelects(winningGrid[0], winningGrid[1]);
+		}
 
-			if (aiMoveToBlock && !aiMoveToWin && !gameOver) {
-				//Debug.Log("Ai should move to block");
-				winningGrid = GetGrid(board, -2);
-				StartCoroutine(AIDelay(winningGrid[0], winningGrid[1]));
-				//AiSelects(winningGrid[0], winningGrid[1]);
+		if (aiMoveToBlock && !aiMoveToWin && !gameOver) {
+			//Debug.Log("Ai should move to block");
+			winningGrid = GetGrid(board, -2);
+			StartCoroutine(AIDelay(winningGrid[0], winningGrid[1]));
+			//AiSelects(winningGrid[0], winningGrid[1]);
 
-			}
+		}
 
-			if (!aiMoveToBlock && !aiMoveToWin && turn >= 4 && !gameOver) {
-				//use a MiniMax algorithm
-				int[] bestMove = GetBestMove();
+		if (!aiMoveToBlock && !aiMoveToWin && turn >= 4 && !gameOver) {
+			//use a MiniMax algorithm
+			int[] bestMove = GetBestMove();
 
-				if (bestMove != null) {
-
-					StartCoroutine(AIDelay(bestMove[0], bestMove[1]));
-					//AiSelects(bestMove[0], bestMove[1]);
-				}
+			if (bestMove != null) {
+				StartCoroutine(AIDelay(bestMove[0], bestMove[1]));
+				//AiSelects(bestMove[0], bestMove[1]);
 			}
 		}
 		
@@ -481,7 +481,6 @@ public class TicTacToeAI : MonoBehaviour {
 
 			_isPlayerTurn = true;
 			playerIsWaiting = false;
-			//delayFinished = true;
 		}
 	}
 
