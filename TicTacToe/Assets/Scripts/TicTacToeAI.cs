@@ -59,7 +59,7 @@ public class TicTacToeAI : MonoBehaviour {
 	[SerializeField] private GameObject go_audioSourceWaiting;
 	private AudioSource audioSourceSFX;
 	private AudioSource audioSourceGameLoop;
-	//private AudioSource audioSourceWaiting;
+	private AudioSource audioSourceWaiting;
 
 	[SerializeField] private AudioClip buttonClick;
 	[SerializeField] private AudioClip audioGameLoop;
@@ -73,7 +73,11 @@ public class TicTacToeAI : MonoBehaviour {
 	[SerializeField] private GameObject gamePanel;
 	private bool hasPlayedWaitingSound;
 	private bool hasPlayedGameOver;
-	
+	private bool waitingSFXStarted = false;
+	private TicTacToeState emptyState = TicTacToeState.none;
+	private GameObject[,] gamePieces = new GameObject[3, 3];
+	private bool winnerFound;
+
 	private void Awake()
 	{
 		if(onPlayerWin == null){
@@ -82,7 +86,7 @@ public class TicTacToeAI : MonoBehaviour {
 	}
 
     private void Start() {
-		testBoard = new int[3, 3] { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
+		//testBoard = new int[3, 3] { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 		turn = 1;
 		winner = TicTacToeState.none;
 		_isPlayerTurn = true;
@@ -93,15 +97,14 @@ public class TicTacToeAI : MonoBehaviour {
 		playerIsWaiting = false;
 		audioSourceSFX = go_audioSource.GetComponent<AudioSource>();
 		audioSourceGameLoop = go_audioSourceGameLoop.GetComponent<AudioSource>();
-		//audioSourceWaiting = go_audioSourceWaiting.GetComponent<audioSourceWaiting>();
+		audioSourceWaiting = go_audioSourceWaiting.GetComponent<AudioSource>();
 		hasPlayedWaitingSound = false;
+		winnerFound = false;
 	}
 
     public void StartAI(int AILevel){
 		_aiLevel = AILevel;
 		StartGame();
-
-
 
 		//play button click
 		audioSourceGameLoop.clip = audioGameLoop;
@@ -129,7 +132,16 @@ public class TicTacToeAI : MonoBehaviour {
 		aiMoveToWin = CheckStep(board, 2);
 		aiMoveToBlock = CheckStep(board, -2);
 		//Debug.Log("Move to win? : " + aiMoveToWin);
-		//gameOver = CheckIfGameOver(board, out winner);
+
+		if(playerIsWaiting && !waitingSFXStarted && turn!=10 && !gameOver) {
+			audioSourceWaiting.enabled = true;
+			waitingSFXStarted = true;
+        }
+
+		if(!playerIsWaiting && turn!=10 && !gameOver) {
+			audioSourceWaiting.enabled = false;
+			waitingSFXStarted = false;
+		}
 
 		if (turn == 2) {
 			int[] openingMoveCoordinates = MakeOpeningMove(board);
@@ -137,13 +149,13 @@ public class TicTacToeAI : MonoBehaviour {
 			//AiSelects(openingMoveCoordinates[0], openingMoveCoordinates[1]);
 		}
 
-		if (gameOver) {
-			Debug.Log("Game Over. Winner is: " + winner);
+		if (gameOver && !winnerFound) {
+			//Debug.Log("Game Over. Winner is: " + winner);
 			//playerIsWaiting = true;
 			//_isPlayerTurn = false;
 			if (winner == TicTacToeState.circle) {
 				winLoseDrawText.text = "YOU WIN!\n Click RETRY to play again";
-
+				winnerFound = true;
 				if(!hasPlayedGameOver) {
 					audioSourceSFX.clip = win;
 					audioSourceSFX.Play();
@@ -152,7 +164,7 @@ public class TicTacToeAI : MonoBehaviour {
 					
 			} else if (winner == TicTacToeState.cross) {
 				winLoseDrawText.text = "AI WINS!\n Click RETRY to try again";
-
+				winnerFound = true;
 				if (!hasPlayedGameOver) {
 					audioSourceSFX.clip = lose;
 					audioSourceSFX.Play();
@@ -202,11 +214,9 @@ public class TicTacToeAI : MonoBehaviour {
     }
 
 	private IEnumerator AIDelay(int xCoord, int yCoord) {
-		go_audioSourceWaiting.SetActive(true);
 		yield return new WaitForSeconds(1.5f);
-
 		AiSelects(xCoord, yCoord);
-		go_audioSourceWaiting.SetActive(false);
+		
 	}
 		
 	private int[] GetBestMove() {
@@ -261,9 +271,7 @@ public class TicTacToeAI : MonoBehaviour {
 					}
 				}
 			}
-
 			return bestScore;
-
 		}
     }
 
@@ -337,7 +345,7 @@ public class TicTacToeAI : MonoBehaviour {
 		if (sumDiag2 == 3) {
 			winner = TicTacToeState.cross;
 			return true;
-			Debug.Log("Winner is AI");
+			//Debug.Log("Winner is AI");
 		} else if(sumDiag2==-3) {
 			winner = TicTacToeState.circle;
 			return true;
@@ -471,7 +479,7 @@ public class TicTacToeAI : MonoBehaviour {
 
 	public void AiSelects(int coordX, int coordY){
 
-		if(!_isPlayerTurn && playerIsWaiting && board[coordX, coordY] != -1 && board[coordX, coordY] != 1) { 
+		if(!_isPlayerTurn && playerIsWaiting && board[coordX, coordY] != -1 && board[coordX, coordY] != 1 && !gameOver) { 
 			turn += 1;
 			SetVisual(coordX, coordY, aiState);
 			board[coordX, coordY] = 1;
@@ -491,5 +499,8 @@ public class TicTacToeAI : MonoBehaviour {
 			_triggers[coordX, coordY].transform.position,
 			Quaternion.identity
 		);
+
 	}
+
+
 }
