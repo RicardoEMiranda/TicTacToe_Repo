@@ -144,9 +144,16 @@ public class TicTacToeAI : MonoBehaviour {
 		}
 
 		if (turn == 2) {
-			int[] openingMoveCoordinates = MakeOpeningMove(board);
-			StartCoroutine(AIDelay(openingMoveCoordinates[0], openingMoveCoordinates[1]));
-			//AiSelects(openingMoveCoordinates[0], openingMoveCoordinates[1]);
+			//int[] openingMoveCoordinates = MakeOpeningMove(board);
+			//StartCoroutine(AIDelay(openingMoveCoordinates[0], openingMoveCoordinates[1]));
+			//////AiSelects(openingMoveCoordinates[0], openingMoveCoordinates[1]);
+
+			int[] bestMove = GetBestMove();
+
+			if (bestMove != null) {
+				StartCoroutine(AIDelay(bestMove[0], bestMove[1]));
+				//AiSelects(bestMove[0], bestMove[1]);
+			}
 		}
 
 		if (gameOver && !winnerFound) {
@@ -191,7 +198,7 @@ public class TicTacToeAI : MonoBehaviour {
 			//move AI into that empty slot
 			StartCoroutine(AIDelay(winningGrid[0], winningGrid[1]));
 			//AiSelects(winningGrid[0], winningGrid[1]);
-		}
+		} 
 
 		if (aiMoveToBlock && !aiMoveToWin && !gameOver) {
 			//Debug.Log("Ai should move to block");
